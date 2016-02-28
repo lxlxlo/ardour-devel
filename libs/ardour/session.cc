@@ -302,7 +302,7 @@ Session::Session (AudioEngine &eng,
 	, first_file_header_format_reset (true)
 	, have_looped (false)
 	, _have_rec_enabled_track (false)
-    , _have_rec_disabled_track (true)
+	, _have_rec_disabled_track (true)
 	, _step_editors (0)
 	, _suspend_timecode_transmission (0)
 	,  _speakers (new Speakers)
@@ -312,7 +312,7 @@ Session::Session (AudioEngine &eng,
 	, _scene_changer (0)
 	, _midi_ports (0)
 	, _mmc (0)
-	, _vca_manager (0)
+	, _vca_manager (new VCAManager (*this))
 {
 	uint32_t sr = 0;
 
