@@ -5877,5 +5877,5 @@ Route::slaved_to (boost::shared_ptr<VCA> vca) const
 		return false;
 	}
 
-	return _gain_control->slaved_to (vca->control());
+	return _gain_control->slaved_to (vca);
 }
