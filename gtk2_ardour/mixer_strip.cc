@@ -2522,6 +2522,7 @@ MixerStrip::vca_assign (boost::shared_ptr<VCA> vca)
 		return;
 	}
 	_route->gain_control()->add_master (vca);
+	vca->add_solo_mute_target (_route);
 }
 
 void
@@ -2534,8 +2535,10 @@ MixerStrip::vca_unassign (boost::shared_ptr<VCA> vca)
 	if (!vca) {
 		/* null VCA means drop all VCA assignments */
 		_route->gain_control()->clear_masters ();
+		/* XXX Need to remove all solo/mute target entries */
 	} else {
 		_route->gain_control()->remove_master (vca);
+		vca->remove_solo_mute_target (_route);
 	}
 }
 
