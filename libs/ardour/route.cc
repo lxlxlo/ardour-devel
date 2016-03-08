@@ -5884,7 +5884,8 @@ void
 Route::vca_assign (boost::shared_ptr<VCA> vca)
 {
 	_gain_control->add_master (vca);
-	vca->add_solo_mute_target (shared_from_this());
+	vca->add_solo_target (shared_from_this());
+	vca->add_mute_target (shared_from_this());
 }
 
 void
@@ -5896,6 +5897,7 @@ Route::vca_unassign (boost::shared_ptr<VCA> vca)
 		/* XXXX need to remove from solo/mute target lists */
 	} else {
 		_gain_control->remove_master (vca);
-		vca->remove_solo_mute_target (shared_from_this());
+		vca->remove_solo_target (shared_from_this());
+		vca->remove_mute_target (shared_from_this());
 	}
 }
