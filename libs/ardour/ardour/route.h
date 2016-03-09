@@ -468,6 +468,18 @@ public:
 		boost::weak_ptr<Route> _route;
 	};
 
+	class BooleanRouteAutomationControl : public RouteAutomationControl {
+	public:
+		BooleanRouteAutomationControl (const std::string& name,
+		                               AutomationType atype,
+		                               boost::shared_ptr<AutomationList> alist,
+		                               boost::shared_ptr<Route> route)
+			: RouteAutomationControl (name, atype, alist, route) {}
+	protected:
+		double get_masters_value_locked() const;
+
+	};
+
 	class GainControllable : public GainControl  {
 	public:
 		GainControllable (Session& session,
@@ -492,7 +504,7 @@ public:
 		boost::weak_ptr<Route> _route;
 	};
 
-	class SoloControllable : public RouteAutomationControl {
+	class SoloControllable : public BooleanRouteAutomationControl {
 	public:
 		SoloControllable (std::string name, boost::shared_ptr<Route>);
 		void set_value (double, PBD::Controllable::GroupControlDisposition group_override);
@@ -502,7 +514,7 @@ public:
 		void _set_value (double, PBD::Controllable::GroupControlDisposition group_override);
 	};
 
-	struct MuteControllable : public RouteAutomationControl {
+	struct MuteControllable : public BooleanRouteAutomationControl {
 	public:
 		MuteControllable (std::string name, boost::shared_ptr<Route>);
 		void set_value (double, PBD::Controllable::GroupControlDisposition group_override);
@@ -517,7 +529,7 @@ public:
 		void _set_value (double, PBD::Controllable::GroupControlDisposition group_override);
 	};
 
-	class LIBARDOUR_API PhaseControllable : public RouteAutomationControl {
+	class LIBARDOUR_API PhaseControllable : public BooleanRouteAutomationControl {
 	public:
 		PhaseControllable (std::string name, boost::shared_ptr<Route>);
 		void set_value (double, PBD::Controllable::GroupControlDisposition group_override);
@@ -530,7 +542,7 @@ public:
 		void _set_value (double, PBD::Controllable::GroupControlDisposition group_override);
 	};
 
-	class LIBARDOUR_API SoloIsolateControllable : public RouteAutomationControl {
+	class LIBARDOUR_API SoloIsolateControllable : public BooleanRouteAutomationControl {
 	public:
 		SoloIsolateControllable (std::string name, boost::shared_ptr<Route>);
 		void set_value (double, PBD::Controllable::GroupControlDisposition group_override);
@@ -540,7 +552,7 @@ public:
 		void _set_value (double, PBD::Controllable::GroupControlDisposition group_override);
 	};
 
-	class LIBARDOUR_API SoloSafeControllable : public RouteAutomationControl {
+	class LIBARDOUR_API SoloSafeControllable : public BooleanRouteAutomationControl {
 	public:
 		SoloSafeControllable (std::string name, boost::shared_ptr<Route>);
 		void set_value (double, PBD::Controllable::GroupControlDisposition group_override);
