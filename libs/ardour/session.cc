@@ -98,6 +98,7 @@
 #include "ardour/session_directory.h"
 #include "ardour/session_playlists.h"
 #include "ardour/smf_source.h"
+#include "ardour/solo_isolate_control.h"
 #include "ardour/source_factory.h"
 #include "ardour/speakers.h"
 #include "ardour/tempo.h"
@@ -1506,7 +1507,7 @@ Session::set_track_monitor_input_status (bool yn)
 	boost::shared_ptr<RouteList> rl = routes.reader ();
 	for (RouteList::iterator i = rl->begin(); i != rl->end(); ++i) {
 		boost::shared_ptr<AudioTrack> tr = boost::dynamic_pointer_cast<AudioTrack> (*i);
-		if (tr && tr->record_enabled ()) {
+		if (tr && tr->rec_enable_control()->get_value()) {
 			//cerr << "switching to input = " << !auto_input << __FILE__ << __LINE__ << endl << endl;
 			tr->request_input_monitoring (yn);
 		}
@@ -1941,14 +1942,8 @@ void
 Session::set_all_tracks_record_enabled (bool enable )
 {
 	boost::shared_ptr<RouteList> rl = routes.reader();
-	for (RouteList::iterator i = rl->begin(); i != rl->end(); ++i) {
-		boost::shared_ptr<Track> tr = boost::dynamic_pointer_cast<Track> (*i);
-		if (tr) {
-			tr->set_record_enabled (enable, Controllable::NoGroup);
-		}
-	}
+	set_controls (route_list_to_control_list (rl, &Track::rec_enable_control), enable, Controllable::NoGroup);
 }
-
 
 void
 Session::disable_record (bool rt_context, bool force)
@@ -2981,7 +2976,7 @@ Session::new_audio_track (int input_channels, int output_channels, TrackMode mod
 				//  0 for Stereo Out mode
 				//  0 Multi Out mode
 				if (Config->get_output_auto_connect() & AutoConnectMaster) {
-					track->set_gain (dB_to_coefficient (0), Controllable::NoGroup);
+					track->gain_control()->set_value (dB_to_coefficient (0), Controllable::NoGroup);
 				}
 			}
 
@@ -3429,7 +3424,7 @@ Session::add_routes_inner (RouteList& new_routes, bool input_auto_connect, bool 
 		if (tr) {
 			tr->PlaylistChanged.connect_same_thread (*this, boost::bind (&Session::track_playlist_changed, this, boost::weak_ptr<Track> (tr)));
 			track_playlist_changed (boost::weak_ptr<Track> (tr));
-			tr->RecordEnableChanged.connect_same_thread (*this, boost::bind (&Session::update_route_record_state, this));
+			tr->rec_enable_control()->Changed.connect_same_thread (*this, boost::bind (&Session::update_route_record_state, this));
 
 			boost::shared_ptr<MidiTrack> mt = boost::dynamic_pointer_cast<MidiTrack> (tr);
 			if (mt) {
@@ -3579,7 +3574,7 @@ Session::remove_routes (boost::shared_ptr<RouteList> routes_to_remove)
 				continue;
 			}
 
-			(*iter)->set_solo (false, Controllable::NoGroup);
+			(*iter)->solo_control()->set_value (0.0, Controllable::NoGroup);
 
 			rs->remove (*iter);
 
@@ -3720,7 +3715,7 @@ Session::route_listen_changed (Controllable::GroupControlDisposition group_overr
 					continue;
 				}
 
-				if ((*i)->solo_isolated() || (*i)->is_master() || (*i)->is_monitor() || (*i)->is_auditioner()) {
+				if ((*i)->solo_isolate_control()->solo_isolated() || !(*i)->can_solo()) {
 					/* route does not get solo propagated to it */
 					continue;
 				}
@@ -3733,7 +3728,7 @@ Session::route_listen_changed (Controllable::GroupControlDisposition group_overr
 					 */
 					continue;
 				}
-				(*i)->set_listen (false, Controllable::NoGroup);
+				(*i)->solo_control()->set_value (0.0, Controllable::NoGroup);
 			}
 		}
 
@@ -3758,7 +3753,7 @@ Session::route_solo_isolated_changed (boost::weak_ptr<Route> wpr)
 
 	bool send_changed = false;
 
-	if (route->solo_isolated()) {
+	if (route->solo_isolate_control()->solo_isolated()) {
 		if (_solo_isolated_cnt == 0) {
 			send_changed = true;
 		}
@@ -3837,7 +3832,7 @@ Session::route_solo_changed (bool self_solo_change, Controllable::GroupControlDi
 				continue;
 			}
 
-			if ((*i)->solo_isolated() || (*i)->is_master() || (*i)->is_monitor() || (*i)->is_auditioner()) {
+			if ((*i)->solo_isolate_control()->solo_isolated() || !(*i)->can_solo()) {
 				/* route does not get solo propagated to it */
 				continue;
 			}
@@ -3851,7 +3846,7 @@ Session::route_solo_changed (bool self_solo_change, Controllable::GroupControlDi
 				continue;
 			}
 
-			(*i)->set_solo (false, group_override);
+			(*i)->solo_control()->set_value (0.0, group_override);
 		}
 	}
 
@@ -3870,7 +3865,7 @@ Session::route_solo_changed (bool self_solo_change, Controllable::GroupControlDi
 			continue;
 		}
 
-		if ((*i)->solo_isolated() || (*i)->is_master() || (*i)->is_monitor() || (*i)->is_auditioner()) {
+		if ((*i)->solo_isolate_control()->solo_isolated() || !(*i)->can_solo()) {
 			/* route does not get solo propagated to it */
 			continue;
 		}
@@ -3892,7 +3887,7 @@ Session::route_solo_changed (bool self_solo_change, Controllable::GroupControlDi
 			DEBUG_TRACE (DEBUG::Solo, string_compose ("\tthere is a feed from %1\n", (*i)->name()));
 			if (!via_sends_only) {
 				if (!route->soloed_by_others_upstream()) {
-					(*i)->mod_solo_by_others_downstream (delta);
+					(*i)->solo_control()->mod_solo_by_others_downstream (delta);
 				} else {
 					DEBUG_TRACE (DEBUG::Solo, "\talready soloed by others upstream\n");
 				}
@@ -3921,7 +3916,7 @@ Session::route_solo_changed (bool self_solo_change, Controllable::GroupControlDi
 			if (!via_sends_only) {
 				//NB. Triggers Invert Push, which handles soloed by downstream
 				DEBUG_TRACE (DEBUG::Solo, string_compose ("\tmod %1 by %2\n", (*i)->name(), delta));
-				(*i)->mod_solo_by_others_upstream (delta);
+				(*i)->solo_control()->mod_solo_by_others_upstream (delta);
 			} else {
 				DEBUG_TRACE (DEBUG::Solo, string_compose ("\tfeed to %1 ignored, sends-only\n", (*i)->name()));
 			}
@@ -3968,7 +3963,7 @@ Session::update_route_solo_state (boost::shared_ptr<RouteList> r)
 	}
 
 	for (RouteList::iterator i = r->begin(); i != r->end(); ++i) {
-		if (!(*i)->is_master() && !(*i)->is_monitor() && !(*i)->is_auditioner() && (*i)->self_soloed()) {
+		if ((*i)->can_solo() && (*i)->self_soloed()) {
 			something_soloed = true;
 		}
 
@@ -3977,11 +3972,11 @@ Session::update_route_solo_state (boost::shared_ptr<RouteList> r)
 				listeners++;
 				something_listening = true;
 			} else {
-				(*i)->set_listen (false, Controllable::NoGroup);
+				(*i)->set_listen (false);
 			}
 		}
 
-		if ((*i)->solo_isolated()) {
+		if ((*i)->solo_isolate_control()->solo_isolated()) {
 			isolated++;
 		}
 	}
@@ -6068,7 +6063,7 @@ Session::update_route_record_state ()
 	while (i != rl->end ()) {
 
 		boost::shared_ptr<Track> tr = boost::dynamic_pointer_cast<Track> (*i);
-		if (tr && tr->record_enabled ()) {
+	                            if (tr && tr->rec_enable_control()->get_value()) {
 			break;
 		}
 
@@ -6085,7 +6080,7 @@ Session::update_route_record_state ()
 
 	for (i = rl->begin(); i != rl->end (); ++i) {
 		boost::shared_ptr<Track> tr = boost::dynamic_pointer_cast<Track> (*i);
-		if (tr && !tr->record_enabled ()) {
+		if (tr && !tr->rec_enable_control()->get_value()) {
 			break;
 		}
 	}
@@ -6114,12 +6109,7 @@ void
 Session::solo_control_mode_changed ()
 {
 	/* cancel all solo or all listen when solo control mode changes */
-
-	if (soloing()) {
-		set_solo (get_routes(), false);
-	} else if (listening()) {
-		set_listen (get_routes(), false);
-	}
+	clear_all_solo_state (get_routes());
 }
 
 /** Called when a property of one of our route groups changes */

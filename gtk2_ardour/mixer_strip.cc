@@ -951,7 +951,7 @@ MixerStrip::input_press (GdkEventButton *ev)
 		return true;
 	}
 
-	if (_session->actively_recording() && _route->record_enabled())
+	if (_session->actively_recording() && is_track() && track()->rec_enable_control()->get_value())
 		return true;
 
 	switch (ev->button) {
@@ -1666,7 +1666,7 @@ MixerStrip::name_button_button_press (GdkEventButton* ev)
 		list_route_operations ();
 
 		/* do not allow rename if the track is record-enabled */
-		rename_menu_item->set_sensitive (!_route->record_enabled());
+		rename_menu_item->set_sensitive (!is_track() || !track()->rec_enable_control()->get_value());
 		route_ops_menu->popup (1, ev->time);
 
 		return true;
@@ -1682,7 +1682,7 @@ MixerStrip::name_button_button_release (GdkEventButton* ev)
 		list_route_operations ();
 
 		/* do not allow rename if the track is record-enabled */
-		rename_menu_item->set_sensitive (!_route->record_enabled());
+		rename_menu_item->set_sensitive (!is_track() || !track()->rec_enable_control()->get_value());
 		route_ops_menu->popup (1, ev->time);
 	}
 
@@ -1696,7 +1696,7 @@ MixerStrip::number_button_button_press (GdkEventButton* ev)
 		list_route_operations ();
 
 		/* do not allow rename if the track is record-enabled */
-		rename_menu_item->set_sensitive (!_route->record_enabled());
+		rename_menu_item->set_sensitive (!is_track() || !track()->rec_enable_control()->get_value());
 		route_ops_menu->popup (1, ev->time);
 
 		return true;
@@ -2140,7 +2140,7 @@ MixerStrip::set_button_names ()
 			monitor_section_button->set_text (_("Mon"));
 		}
 
-		if (_route && _route->solo_safe()) {
+		if (_route && _route->solo_safe_control()->solo_safe()) {
 			solo_button->set_visual_state (Gtkmm2ext::VisualState (solo_button->visual_state() | Gtkmm2ext::Insensitive));
 		} else {
 			solo_button->set_visual_state (Gtkmm2ext::VisualState (solo_button->visual_state() & ~Gtkmm2ext::Insensitive));
@@ -2169,7 +2169,7 @@ MixerStrip::set_button_names ()
 			monitor_section_button->set_text (S_("Mon|O"));
 		}
 
-		if (_route && _route->solo_safe()) {
+		if (_route && _route->solo_safe_control()->solo_safe()) {
 			solo_button->set_visual_state (Gtkmm2ext::VisualState (solo_button->visual_state() | Gtkmm2ext::Insensitive));
 		} else {
 			solo_button->set_visual_state (Gtkmm2ext::VisualState (solo_button->visual_state() & ~Gtkmm2ext::Insensitive));
