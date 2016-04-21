@@ -3700,7 +3700,9 @@ Session::route_listen_changed (Controllable::GroupControlDisposition group_overr
 		return;
 	}
 
-	if (route->listening_via_monitor ()) {
+	assert (Config->get_solo_control_is_listen_control());
+
+	if (route->solo_control()->soloed_by_self_or_masters()) {
 
 		if (Config->get_exclusive_solo()) {
 
