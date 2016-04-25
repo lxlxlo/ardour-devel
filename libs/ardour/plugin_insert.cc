@@ -2441,10 +2441,6 @@ PluginInsert::PluginControl::PluginControl (PluginInsert*                     p,
 			list->set_interpolation(Evoral::ControlList::Discrete);
 		}
 	}
-
-	if (desc.toggled) {
-		set_flags(Controllable::Toggle);
-	}
 }
 
 /** @param val `user' value */
@@ -2513,10 +2509,6 @@ PluginInsert::PluginPropertyControl::PluginPropertyControl (PluginInsert*       
 	if (alist()) {
 		alist()->set_yrange (desc.lower, desc.upper);
 		alist()->reset_default (desc.normal);
-	}
-
-	if (desc.toggled) {
-		set_flags(Controllable::Toggle);
 	}
 }
 
