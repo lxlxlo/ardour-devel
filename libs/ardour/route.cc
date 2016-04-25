@@ -85,10 +85,10 @@ PBD::Signal0<void> Route::RemoteControlIDChange;
 
 /** Base class for all routable/mixable objects (tracks and busses) */
 Route::Route (Session& sess, string name, Flag flg, DataType default_type)
-	: Stripable (sess, name)
+	: GraphNode (sess._process_graph)
+	, Stripable (sess, name)
 	, Muteable (sess, name)
 	, Automatable (sess)
-	, GraphNode (sess._process_graph)
 	, _active (true)
 	, _signal_latency (0)
 	, _signal_latency_at_amp_position (0)
@@ -5432,16 +5432,18 @@ Route::slaved_to (boost::shared_ptr<VCA> vca) const
 	return _gain_control->slaved_to (vca->gain_control());
 }
 
-void
-Route::vca_assign (boost::shared_ptr<VCA> vca)
+int
+Route::assign_controls (boost::shared_ptr<VCA> vca)
 {
 	_gain_control->add_master (vca->gain_control());
 	_solo_control->add_master (vca->solo_control());
 	_mute_control->add_master (vca->mute_control());
+
+	return 0;
 }
 
-void
-Route::vca_unassign (boost::shared_ptr<VCA> vca)
+int
+Route::unassign_controls (boost::shared_ptr<VCA> vca)
 {
 	if (!vca) {
 		/* unassign from all */
@@ -5453,6 +5455,8 @@ Route::vca_unassign (boost::shared_ptr<VCA> vca)
 		_solo_control->remove_master (vca->solo_control());
 		_mute_control->remove_master (vca->mute_control());
 	}
+
+	return 0;
 }
 
 bool
