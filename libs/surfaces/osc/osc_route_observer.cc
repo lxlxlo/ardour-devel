@@ -45,17 +45,17 @@ OSCRouteObserver::OSCRouteObserver (boost::shared_ptr<Route> r, lo_address a)
 		boost::shared_ptr<Track> track = boost::dynamic_pointer_cast<Track>(r);
 		boost::shared_ptr<Controllable> rec_controllable = boost::dynamic_pointer_cast<Controllable>(track->rec_enable_control());
 
-		rec_controllable->Changed.connect (rec_changed_connection, MISSING_INVALIDATOR, bind (&OSCRouteObserver::send_change_message, this, X_("/route/rec"), track->rec_enable_control()), OSC::instance());
+		rec_controllable->Changed.connect (rec_changed_connection, MISSING_INVALIDATOR, bind (&OSCRouteObserver::send_change_message, this, X_("/strip/recenable"), track->rec_enable_control()), OSC::instance());
 	}
 
 	boost::shared_ptr<Controllable> mute_controllable = boost::dynamic_pointer_cast<Controllable>(_route->mute_control());
-	mute_controllable->Changed.connect (mute_changed_connection, MISSING_INVALIDATOR, bind (&OSCRouteObserver::send_change_message, this, X_("/route/mute"), _route->mute_control()), OSC::instance());
+	mute_controllable->Changed.connect (mute_changed_connection, MISSING_INVALIDATOR, bind (&OSCRouteObserver::send_change_message, this, X_("/strip/mute"), _route->mute_control()), OSC::instance());
 
 	boost::shared_ptr<Controllable> solo_controllable = boost::dynamic_pointer_cast<Controllable>(_route->solo_control());
-	solo_controllable->Changed.connect (solo_changed_connection, MISSING_INVALIDATOR, bind (&OSCRouteObserver::send_change_message, this, X_("/route/solo"), _route->solo_control()), OSC::instance());
+	solo_controllable->Changed.connect (solo_changed_connection, MISSING_INVALIDATOR, bind (&OSCRouteObserver::send_change_message, this, X_("/strip/solo"), _route->solo_control()), OSC::instance());
 
 	boost::shared_ptr<Controllable> gain_controllable = boost::dynamic_pointer_cast<Controllable>(_route->gain_control());
-	gain_controllable->Changed.connect (gain_changed_connection, MISSING_INVALIDATOR, bind (&OSCRouteObserver::send_change_message, this, X_("/route/gain"), _route->gain_control()), OSC::instance());
+	gain_controllable->Changed.connect (gain_changed_connection, MISSING_INVALIDATOR, bind (&OSCRouteObserver::send_change_message, this, X_("/strip/gainabs"), _route->gain_control()), OSC::instance());
 }
 
 OSCRouteObserver::~OSCRouteObserver ()
@@ -85,7 +85,7 @@ OSCRouteObserver::name_changed (const PBD::PropertyChange& what_changed)
 	lo_message_add_int32 (msg, _route->remote_control_id());
 	lo_message_add_string (msg, _route->name().c_str());
 
-	lo_send_message (addr, "/route/name", msg);
+	lo_send_message (addr, "/strip/name", msg);
 	lo_message_free (msg);
 }
 
