@@ -339,70 +339,70 @@ OSC::register_callbacks()
 
 #define REGISTER_CALLBACK(serv,path,types, function) lo_server_add_method (serv, path, types, OSC::_ ## function, this)
 
-		REGISTER_CALLBACK (serv, "/routes/list", "", routes_list);
-		REGISTER_CALLBACK (serv, "/ardour/add_marker", "", add_marker);
-		REGISTER_CALLBACK (serv, "/ardour/access_action", "s", access_action);
-		REGISTER_CALLBACK (serv, "/ardour/loop_toggle", "", loop_toggle);
-		REGISTER_CALLBACK (serv, "/ardour/loop_location", "ii", loop_location);
-		REGISTER_CALLBACK (serv, "/ardour/goto_start", "", goto_start);
-		REGISTER_CALLBACK (serv, "/ardour/goto_end", "", goto_end);
-		REGISTER_CALLBACK (serv, "/ardour/rewind", "", rewind);
-		REGISTER_CALLBACK (serv, "/ardour/ffwd", "", ffwd);
-		REGISTER_CALLBACK (serv, "/ardour/transport_stop", "", transport_stop);
-		REGISTER_CALLBACK (serv, "/ardour/transport_play", "", transport_play);
-		REGISTER_CALLBACK (serv, "/ardour/transport_frame", "", transport_frame);
-		REGISTER_CALLBACK (serv, "/ardour/transport_speed", "", transport_speed);
-		REGISTER_CALLBACK (serv, "/ardour/record_enabled", "", record_enabled);
-		REGISTER_CALLBACK (serv, "/ardour/set_transport_speed", "f", set_transport_speed);
-		REGISTER_CALLBACK (serv, "/ardour/locate", "ii", locate);
-		REGISTER_CALLBACK (serv, "/ardour/save_state", "", save_state);
-		REGISTER_CALLBACK (serv, "/ardour/prev_marker", "", prev_marker);
-		REGISTER_CALLBACK (serv, "/ardour/next_marker", "", next_marker);
-		REGISTER_CALLBACK (serv, "/ardour/undo", "", undo);
-		REGISTER_CALLBACK (serv, "/ardour/redo", "", redo);
-		REGISTER_CALLBACK (serv, "/ardour/toggle_punch_in", "", toggle_punch_in);
-		REGISTER_CALLBACK (serv, "/ardour/toggle_punch_out", "", toggle_punch_out);
-		REGISTER_CALLBACK (serv, "/ardour/rec_enable_toggle", "", rec_enable_toggle);
-		REGISTER_CALLBACK (serv, "/ardour/toggle_all_rec_enables", "", toggle_all_rec_enables);
-		REGISTER_CALLBACK (serv, "/ardour/all_tracks_rec_in", "f", all_tracks_rec_in);
-		REGISTER_CALLBACK (serv, "/ardour/all_tracks_rec_out", "f", all_tracks_rec_out);
-		REGISTER_CALLBACK (serv, "/ardour/remove_marker", "", remove_marker_at_playhead);
-		REGISTER_CALLBACK (serv, "/ardour/jump_bars", "f", jump_by_bars);
-		REGISTER_CALLBACK (serv, "/ardour/jump_seconds", "f", jump_by_seconds);
-		REGISTER_CALLBACK (serv, "/ardour/mark_in", "", mark_in);
-		REGISTER_CALLBACK (serv, "/ardour/mark_out", "", mark_out);
-		REGISTER_CALLBACK (serv, "/ardour/toggle_click", "", toggle_click);
-		REGISTER_CALLBACK (serv, "/ardour/midi_panic", "", midi_panic);
-		REGISTER_CALLBACK (serv, "/ardour/toggle_roll", "", toggle_roll);
-		REGISTER_CALLBACK (serv, "/ardour/stop_forget", "", stop_forget);
-		REGISTER_CALLBACK (serv, "/ardour/set_punch_range", "", set_punch_range);
-		REGISTER_CALLBACK (serv, "/ardour/set_loop_range", "", set_loop_range);
-		REGISTER_CALLBACK (serv, "/ardour/set_session_range", "", set_session_range);
-		REGISTER_CALLBACK (serv, "/ardour/toggle_monitor_mute", "", toggle_monitor_mute);
-		REGISTER_CALLBACK (serv, "/ardour/toggle_monitor_dim", "", toggle_monitor_dim);
-		REGISTER_CALLBACK (serv, "/ardour/toggle_monitor_mono", "", toggle_monitor_mono);
-		REGISTER_CALLBACK (serv, "/ardour/quick_snapshot_switch", "", quick_snapshot_switch);
-		REGISTER_CALLBACK (serv, "/ardour/quick_snapshot_stay", "", quick_snapshot_stay);
-		REGISTER_CALLBACK (serv, "/ardour/fit_1_track", "", fit_1_track);
-		REGISTER_CALLBACK (serv, "/ardour/fit_2_tracks", "", fit_2_tracks);
-		REGISTER_CALLBACK (serv, "/ardour/fit_4_tracks", "", fit_4_tracks);
-		REGISTER_CALLBACK (serv, "/ardour/fit_8_tracks", "", fit_8_tracks);
-		REGISTER_CALLBACK (serv, "/ardour/fit_16_tracks", "", fit_16_tracks);
-		REGISTER_CALLBACK (serv, "/ardour/fit_32_tracks", "", fit_32_tracks);
-		REGISTER_CALLBACK (serv, "/ardour/fit_all_tracks", "", fit_all_tracks);
-		REGISTER_CALLBACK (serv, "/ardour/zoom_100_ms", "", zoom_100_ms);
-		REGISTER_CALLBACK (serv, "/ardour/zoom_1_sec", "", zoom_1_sec);
-		REGISTER_CALLBACK (serv, "/ardour/zoom_10_sec", "", zoom_10_sec);
-		REGISTER_CALLBACK (serv, "/ardour/zoom_1_min", "", zoom_1_min);
-		REGISTER_CALLBACK (serv, "/ardour/zoom_5_min", "", zoom_5_min);
-		REGISTER_CALLBACK (serv, "/ardour/zoom_10_min", "", zoom_10_min);
-		REGISTER_CALLBACK (serv, "/ardour/zoom_to_session", "", zoom_to_session);
-		REGISTER_CALLBACK (serv, "/ardour/temporal_zoom_in", "f", temporal_zoom_in);
-		REGISTER_CALLBACK (serv, "/ardour/temporal_zoom_out", "f", temporal_zoom_out);
-		REGISTER_CALLBACK (serv, "/ardour/scroll_up_1_track", "f", scroll_up_1_track);
-		REGISTER_CALLBACK (serv, "/ardour/scroll_dn_1_track", "f", scroll_dn_1_track);
-		REGISTER_CALLBACK (serv, "/ardour/scroll_up_1_page", "f", scroll_up_1_page);
-		REGISTER_CALLBACK (serv, "/ardour/scroll_dn_1_page", "f", scroll_dn_1_page);
+		REGISTER_CALLBACK (serv, "/strip/list", "", routes_list);
+		REGISTER_CALLBACK (serv, "/add_marker", "", add_marker);
+		REGISTER_CALLBACK (serv, "/access_action", "s", access_action);
+		REGISTER_CALLBACK (serv, "/loop_toggle", "", loop_toggle);
+		REGISTER_CALLBACK (serv, "/loop_location", "ii", loop_location);
+		REGISTER_CALLBACK (serv, "/goto_start", "", goto_start);
+		REGISTER_CALLBACK (serv, "/goto_end", "", goto_end);
+		REGISTER_CALLBACK (serv, "/rewind", "", rewind);
+		REGISTER_CALLBACK (serv, "/ffwd", "", ffwd);
+		REGISTER_CALLBACK (serv, "/transport_stop", "", transport_stop);
+		REGISTER_CALLBACK (serv, "/transport_play", "", transport_play);
+		REGISTER_CALLBACK (serv, "/transport_frame", "", transport_frame);
+		REGISTER_CALLBACK (serv, "/transport_speed", "", transport_speed);
+		REGISTER_CALLBACK (serv, "/record_enabled", "", record_enabled);
+		REGISTER_CALLBACK (serv, "/set_transport_speed", "f", set_transport_speed);
+		REGISTER_CALLBACK (serv, "/locate", "ii", locate);
+		REGISTER_CALLBACK (serv, "/save_state", "", save_state);
+		REGISTER_CALLBACK (serv, "/prev_marker", "", prev_marker);
+		REGISTER_CALLBACK (serv, "/next_marker", "", next_marker);
+		REGISTER_CALLBACK (serv, "/undo", "", undo);
+		REGISTER_CALLBACK (serv, "/redo", "", redo);
+		REGISTER_CALLBACK (serv, "/toggle_punch_in", "", toggle_punch_in);
+		REGISTER_CALLBACK (serv, "/toggle_punch_out", "", toggle_punch_out);
+		REGISTER_CALLBACK (serv, "/rec_enable_toggle", "", rec_enable_toggle);
+		REGISTER_CALLBACK (serv, "/toggle_all_rec_enables", "", toggle_all_rec_enables);
+		REGISTER_CALLBACK (serv, "/all_tracks_rec_in", "f", all_tracks_rec_in);
+		REGISTER_CALLBACK (serv, "/all_tracks_rec_out", "f", all_tracks_rec_out);
+		REGISTER_CALLBACK (serv, "/remove_marker", "", remove_marker_at_playhead);
+		REGISTER_CALLBACK (serv, "/jump_bars", "f", jump_by_bars);
+		REGISTER_CALLBACK (serv, "/jump_seconds", "f", jump_by_seconds);
+		REGISTER_CALLBACK (serv, "/mark_in", "", mark_in);
+		REGISTER_CALLBACK (serv, "/mark_out", "", mark_out);
+		REGISTER_CALLBACK (serv, "/toggle_click", "", toggle_click);
+		REGISTER_CALLBACK (serv, "/midi_panic", "", midi_panic);
+		REGISTER_CALLBACK (serv, "/toggle_roll", "", toggle_roll);
+		REGISTER_CALLBACK (serv, "/stop_forget", "", stop_forget);
+		REGISTER_CALLBACK (serv, "/set_punch_range", "", set_punch_range);
+		REGISTER_CALLBACK (serv, "/set_loop_range", "", set_loop_range);
+		REGISTER_CALLBACK (serv, "/set_session_range", "", set_session_range);
+		REGISTER_CALLBACK (serv, "/toggle_monitor_mute", "", toggle_monitor_mute);
+		REGISTER_CALLBACK (serv, "/toggle_monitor_dim", "", toggle_monitor_dim);
+		REGISTER_CALLBACK (serv, "/toggle_monitor_mono", "", toggle_monitor_mono);
+		REGISTER_CALLBACK (serv, "/quick_snapshot_switch", "", quick_snapshot_switch);
+		REGISTER_CALLBACK (serv, "/quick_snapshot_stay", "", quick_snapshot_stay);
+		REGISTER_CALLBACK (serv, "/fit_1_track", "", fit_1_track);
+		REGISTER_CALLBACK (serv, "/fit_2_tracks", "", fit_2_tracks);
+		REGISTER_CALLBACK (serv, "/fit_4_tracks", "", fit_4_tracks);
+		REGISTER_CALLBACK (serv, "/fit_8_tracks", "", fit_8_tracks);
+		REGISTER_CALLBACK (serv, "/fit_16_tracks", "", fit_16_tracks);
+		REGISTER_CALLBACK (serv, "/fit_32_tracks", "", fit_32_tracks);
+		REGISTER_CALLBACK (serv, "/fit_all_tracks", "", fit_all_tracks);
+		REGISTER_CALLBACK (serv, "/zoom_100_ms", "", zoom_100_ms);
+		REGISTER_CALLBACK (serv, "/zoom_1_sec", "", zoom_1_sec);
+		REGISTER_CALLBACK (serv, "/zoom_10_sec", "", zoom_10_sec);
+		REGISTER_CALLBACK (serv, "/zoom_1_min", "", zoom_1_min);
+		REGISTER_CALLBACK (serv, "/zoom_5_min", "", zoom_5_min);
+		REGISTER_CALLBACK (serv, "/zoom_10_min", "", zoom_10_min);
+		REGISTER_CALLBACK (serv, "/zoom_to_session", "", zoom_to_session);
+		REGISTER_CALLBACK (serv, "/temporal_zoom_in", "f", temporal_zoom_in);
+		REGISTER_CALLBACK (serv, "/temporal_zoom_out", "f", temporal_zoom_out);
+		REGISTER_CALLBACK (serv, "/scroll_up_1_track", "f", scroll_up_1_track);
+		REGISTER_CALLBACK (serv, "/scroll_dn_1_track", "f", scroll_dn_1_track);
+		REGISTER_CALLBACK (serv, "/scroll_up_1_page", "f", scroll_up_1_page);
+		REGISTER_CALLBACK (serv, "/scroll_dn_1_page", "f", scroll_dn_1_page);
 
 
 		/*
@@ -471,20 +471,20 @@ OSC::register_callbacks()
 		REGISTER_CALLBACK (serv, "/ardour/pushbutton/scroll_dn_1_page", "f", scroll_dn_1_page);
 
 		/* These commands require the route index in addition to the arg; TouchOSC (et al) can't use these  */ 
-		REGISTER_CALLBACK (serv, "/ardour/routes/mute", "ii", route_mute);
-		REGISTER_CALLBACK (serv, "/ardour/routes/solo", "ii", route_solo);
-		REGISTER_CALLBACK (serv, "/ardour/routes/recenable", "ii", route_recenable);
-		REGISTER_CALLBACK (serv, "/ardour/routes/gainabs", "if", route_set_gain_abs);
-		REGISTER_CALLBACK (serv, "/ardour/routes/gaindB", "if", route_set_gain_dB);
-		REGISTER_CALLBACK (serv, "/ardour/routes/gainfader", "if", route_set_gain_fader);
-		REGISTER_CALLBACK (serv, "/ardour/routes/trimabs", "if", route_set_trim_abs);
-		REGISTER_CALLBACK (serv, "/ardour/routes/trimdB", "if", route_set_trim_dB);
-		REGISTER_CALLBACK (serv, "/ardour/routes/pan_stereo_position", "if", route_set_pan_stereo_position);
-		REGISTER_CALLBACK (serv, "/ardour/routes/pan_stereo_width", "if", route_set_pan_stereo_width);
-		REGISTER_CALLBACK (serv, "/ardour/routes/plugin/parameter", "iiif", route_plugin_parameter);
-		REGISTER_CALLBACK (serv, "/ardour/routes/plugin/parameter/print", "iii", route_plugin_parameter_print);
-		REGISTER_CALLBACK (serv, "/ardour/routes/send/gainabs", "iif", route_set_send_gain_abs);
-		REGISTER_CALLBACK (serv, "/ardour/routes/send/gaindB", "iif", route_set_send_gain_dB);
+		REGISTER_CALLBACK (serv, "/strip/mute", "ii", route_mute);
+		REGISTER_CALLBACK (serv, "/strip/solo", "ii", route_solo);
+		REGISTER_CALLBACK (serv, "/strip/recenable", "ii", route_recenable);
+		REGISTER_CALLBACK (serv, "/strip/gainabs", "if", route_set_gain_abs);
+		REGISTER_CALLBACK (serv, "/strip/gaindB", "if", route_set_gain_dB);
+		REGISTER_CALLBACK (serv, "/strip/fader", "if", route_set_gain_fader);
+		REGISTER_CALLBACK (serv, "/strip/trimabs", "if", route_set_trim_abs);
+		REGISTER_CALLBACK (serv, "/strip/trimdB", "if", route_set_trim_dB);
+		REGISTER_CALLBACK (serv, "/strip/pan_stereo_position", "if", route_set_pan_stereo_position);
+		REGISTER_CALLBACK (serv, "/strip/pan_stereo_width", "if", route_set_pan_stereo_width);
+		REGISTER_CALLBACK (serv, "/strip/plugin/parameter", "iiif", route_plugin_parameter);
+		REGISTER_CALLBACK (serv, "/strip/plugin/parameter/print", "iii", route_plugin_parameter_print);
+		REGISTER_CALLBACK (serv, "/strip/send/gainabs", "iif", route_set_send_gain_abs);
+		REGISTER_CALLBACK (serv, "/strip/send/gaindB", "iif", route_set_send_gain_dB);
 
 		/* still not-really-standardized query interface */
 		//REGISTER_CALLBACK (serv, "/ardour/*/#current_value", "", current_value);
@@ -664,7 +664,7 @@ OSC::send_current_value (const char* path, lo_arg** argv, int argc, lo_message m
 			lo_message_add_string (reply, "not found");
 		} else {
 
-			if (strcmp (path, "/routes/state") == 0) {
+			if (strcmp (path, "/strip/state") == 0) {
 
 				if (boost::dynamic_pointer_cast<AudioTrack>(r)) {
 					lo_message_add_string (reply, "AT");
@@ -680,11 +680,11 @@ OSC::send_current_value (const char* path, lo_arg** argv, int argc, lo_message m
 				lo_message_add_int32 (reply, r->muted());
 				lo_message_add_int32 (reply, r->soloed());
 
-			} else if (strcmp (path, "/routes/mute") == 0) {
+			} else if (strcmp (path, "/strip/mute") == 0) {
 
 				lo_message_add_int32 (reply, (float) r->muted());
 
-			} else if (strcmp (path, "/routes/solo") == 0) {
+			} else if (strcmp (path, "/strip/solo") == 0) {
 
 				lo_message_add_int32 (reply, r->soloed());
 			}
@@ -718,7 +718,7 @@ OSC::catchall (const char *path, const char* types, lo_arg **argv, int argc, lo_
 		current_value_query (path, len, argv, argc, msg);
 		ret = 0;
 
-	} else if (strcmp (path, "/routes/listen") == 0) {
+	} else if (strcmp (path, "/strip/listen") == 0) {
 
 		cerr << "set up listener\n";
 
@@ -748,7 +748,7 @@ OSC::catchall (const char *path, const char* types, lo_arg **argv, int argc, lo_
 
 		ret = 0;
 
-	} else if (strcmp (path, "/routes/ignore") == 0) {
+	} else if (strcmp (path, "/strip/ignore") == 0) {
 
 		for (int n = 0; n < argc; ++n) {
 
@@ -761,30 +761,30 @@ OSC::catchall (const char *path, const char* types, lo_arg **argv, int argc, lo_
 
 		ret = 0;
 	} else if (argc == 1 && types[0] == 'f') { // single float -- probably TouchOSC
-		if (!strncmp (path, "/ardour/routes/gainabs/", 23) && strlen (path) > 23) {
-			int rid = atoi (&path[23]);
+		if (!strncmp (path, "/strip/gainabs/", 15) && strlen (path) > 15) {
+			int rid = atoi (&path[15]);
 			// use some power-scale mapping??
 			route_set_gain_abs (rid, argv[0]->f);
 			ret = 0;
 		}
-		else if (!strncmp (path, "/ardour/routes/trimabs/", 23) && strlen (path) > 23) {
-			int rid = atoi (&path[23]);
+		else if (!strncmp (path, "/strip/trimabs/", 15) && strlen (path) > 15) {
+			int rid = atoi (&path[15]);
 			// normalize 0..1 ?
 			route_set_trim_abs (rid, argv[0]->f);
 			ret = 0;
 		}
-		else if (!strncmp (path, "/ardour/routes/mute/", 20) && strlen (path) > 20) {
-			int rid = atoi (&path[20]);
+		else if (!strncmp (path, "/strip/mute/", 12) && strlen (path) > 12) {
+			int rid = atoi (&path[12]);
 			route_mute (rid, argv[0]->f == 1.0);
 			ret = 0;
 		}
-		else if (!strncmp (path, "/ardour/routes/solo/", 20) && strlen (path) > 20) {
-			int rid = atoi (&path[20]);
+		else if (!strncmp (path, "/strip/solo/", 12) && strlen (path) > 12) {
+			int rid = atoi (&path[12]);
 			route_solo (rid, argv[0]->f == 1.0);
 			ret = 0;
 		}
-		else if (!strncmp (path, "/ardour/routes/recenable/", 25) && strlen (path) > 25) {
-			int rid = atoi (&path[25]);
+		else if (!strncmp (path, "/strip/recenable/", 17) && strlen (path) > 17) {
+			int rid = atoi (&path[17]);
 			route_recenable (rid, argv[0]->f == 1.0);
 			ret = 0;
 		}
@@ -1008,7 +1008,7 @@ OSC::transport_frame (lo_message msg)
 	lo_message reply = lo_message_new ();
 	lo_message_add_int64 (reply, pos);
 
-	lo_send_message (lo_message_get_source (msg), "/ardour/transport_frame", reply);
+	lo_send_message (lo_message_get_source (msg), "/transport_frame", reply);
 
 	lo_message_free (reply);
 }
@@ -1024,7 +1024,7 @@ OSC::transport_speed (lo_message msg)
 	lo_message reply = lo_message_new ();
 	lo_message_add_double (reply, ts);
 
-	lo_send_message (lo_message_get_source (msg), "/ardour/transport_speed", reply);
+	lo_send_message (lo_message_get_source (msg), "/transport_speed", reply);
 
 	lo_message_free (reply);
 }
@@ -1040,7 +1040,7 @@ OSC::record_enabled (lo_message msg)
 	lo_message reply = lo_message_new ();
 	lo_message_add_int32 (reply, re);
 
-	lo_send_message (lo_message_get_source (msg), "/ardour/record_enabled", reply);
+	lo_send_message (lo_message_get_source (msg), "/record_enabled", reply);
 
 	lo_message_free (reply);
 }
