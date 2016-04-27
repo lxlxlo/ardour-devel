@@ -39,6 +39,7 @@ OSCRouteObserver::OSCRouteObserver (boost::shared_ptr<Route> r, lo_address a)
 	addr = lo_address_new (lo_address_get_hostname(a) , lo_address_get_port(a));
 
 	_route->PropertyChanged.connect (name_changed_connection, MISSING_INVALIDATOR, boost::bind (&OSCRouteObserver::name_changed, this, boost::lambda::_1), OSC::instance());
+	name_changed (ARDOUR::Properties::name);
 
 	if (boost::dynamic_pointer_cast<AudioTrack>(_route) || boost::dynamic_pointer_cast<MidiTrack>(_route)) {
 
@@ -46,16 +47,20 @@ OSCRouteObserver::OSCRouteObserver (boost::shared_ptr<Route> r, lo_address a)
 		boost::shared_ptr<Controllable> rec_controllable = boost::dynamic_pointer_cast<Controllable>(track->rec_enable_control());
 
 		rec_controllable->Changed.connect (rec_changed_connection, MISSING_INVALIDATOR, bind (&OSCRouteObserver::send_change_message, this, X_("/strip/recenable"), track->rec_enable_control()), OSC::instance());
+		send_change_message ("/strip/recenable", track->rec_enable_control());
 	}
 
 	boost::shared_ptr<Controllable> mute_controllable = boost::dynamic_pointer_cast<Controllable>(_route->mute_control());
 	mute_controllable->Changed.connect (mute_changed_connection, MISSING_INVALIDATOR, bind (&OSCRouteObserver::send_change_message, this, X_("/strip/mute"), _route->mute_control()), OSC::instance());
+	send_change_message ("/strip/mute", _route->mute_control());
 
 	boost::shared_ptr<Controllable> solo_controllable = boost::dynamic_pointer_cast<Controllable>(_route->solo_control());
 	solo_controllable->Changed.connect (solo_changed_connection, MISSING_INVALIDATOR, bind (&OSCRouteObserver::send_change_message, this, X_("/strip/solo"), _route->solo_control()), OSC::instance());
+	send_change_message ("/strip/solo", _route->solo_control());
 
 	boost::shared_ptr<Controllable> gain_controllable = boost::dynamic_pointer_cast<Controllable>(_route->gain_control());
 	gain_controllable->Changed.connect (gain_changed_connection, MISSING_INVALIDATOR, bind (&OSCRouteObserver::send_change_message, this, X_("/strip/gainabs"), _route->gain_control()), OSC::instance());
+	send_change_message ("/strip/gainabs", _route->gain_control());
 }
 
 OSCRouteObserver::~OSCRouteObserver ()
