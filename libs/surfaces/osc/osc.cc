@@ -403,6 +403,10 @@ OSC::register_callbacks()
 		REGISTER_CALLBACK (serv, "/scroll_dn_1_track", "f", scroll_dn_1_track);
 		REGISTER_CALLBACK (serv, "/scroll_up_1_page", "f", scroll_up_1_page);
 		REGISTER_CALLBACK (serv, "/scroll_dn_1_page", "f", scroll_dn_1_page);
+		REGISTER_CALLBACK (serv, "/surface", "iiii", set_surface);
+		REGISTER_CALLBACK (serv, "/bank", "i", set_bank);
+		REGISTER_CALLBACK (serv, "/bank_up", "", bank_up);
+		REGISTER_CALLBACK (serv, "/bank_down", "", bank_down);
 
 
 		/*
@@ -995,6 +999,34 @@ OSC::routes_list (lo_message msg)
 	lo_send_message (lo_message_get_source (msg), "#reply", reply);
 
 	lo_message_free (reply);
+}
+
+int
+OSC::set_surface (int bank_size, int strip_types, int feedback, int gainmode)
+{
+	//create or modify OSCSurface struct for remote_url
+	return 0;
+}
+
+int
+OSC::set_bank (int bank_start)
+{
+	// set bank to bank starting with bank_start RID
+	return 0;
+}
+
+int
+OSC::bank_up (void)
+{
+	// set bank to bank + bank_size
+	return 0;
+}
+
+int
+OSC::bank_down (void)
+{
+	// set bank to bank - bank_size
+	return 0;
 }
 
 void

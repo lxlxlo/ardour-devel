@@ -21,6 +21,7 @@
 #define ardour_osc_h
 
 #include <string>
+#include <vector>
 
 #include <sys/time.h>
 #include <pthread.h>
@@ -91,6 +92,28 @@ class OSC : public ARDOUR::ControlProtocol, public AbstractUI<OSCUIRequest>
 		Unhandled,
 		All
 	};
+
+// this is used for feed back so we only need to send one kind
+	enum OSCGainMode {
+		ABS,
+		DB,
+		FADER,
+		INT1024
+	};
+
+// keep a surface's global setup by remote server url
+	struct OSCSurface {
+	public:
+		std::string remote_url;
+		int bank;
+		int bank_size;
+		int strip_types;
+		int feedback;
+		OSCGainMode gainmode;
+	};
+
+// storage for  each surface's settings
+	std::vector<OSCSurface> _surface;
 
 	std::string get_server_url ();
 	void set_debug_mode (OSCDebugMode m) { _debugmode = m; }
@@ -297,6 +320,10 @@ class OSC : public ARDOUR::ControlProtocol, public AbstractUI<OSCUIRequest>
         PATH_CALLBACK3(route_set_send_gain_dB,i,i,f);
         PATH_CALLBACK4(route_plugin_parameter,i,i,i,f);
         PATH_CALLBACK3(route_plugin_parameter_print,i,i,i);
+	PATH_CALLBACK4(set_surface, i, i, i, i);
+	PATH_CALLBACK1(set_bank, i,);
+	PATH_CALLBACK(bank_up);
+	PATH_CALLBACK(bank_down);
 
 	int route_mute (int rid, int yn);
 	int route_solo (int rid, int yn);
@@ -312,6 +339,12 @@ class OSC : public ARDOUR::ControlProtocol, public AbstractUI<OSCUIRequest>
 	int route_set_send_gain_dB (int rid, int sid, float val);
 	int route_plugin_parameter (int rid, int piid,int par, float val);
 	int route_plugin_parameter_print (int rid, int piid,int par);
+
+	//banking functions
+	int set_surface (int bank_size, int strip_types, int feedback, int gainmode);
+	int set_bank (int bank_start);
+	int bank_up (void);
+	int bank_down (void);
 
 	void listen_to_route (boost::shared_ptr<ARDOUR::Route>, lo_address);
 	void end_listen (boost::shared_ptr<ARDOUR::Route>, lo_address);
