@@ -34,9 +34,12 @@ using namespace PBD;
 using namespace ARDOUR;
 using namespace ArdourSurface;
 
-OSCRouteObserver::OSCRouteObserver (boost::shared_ptr<Route> r, lo_address a)
+OSCRouteObserver::OSCRouteObserver (boost::shared_ptr<Route> r, lo_address a, uint32_t s, uint32_t gm)
 	: _route (r)
+	,sid (s)
+	,gainmode (gm)
 {
+
 	addr = lo_address_new (lo_address_get_hostname(a) , lo_address_get_port(a));
 
 	_route->PropertyChanged.connect (name_changed_connection, MISSING_INVALIDATOR, boost::bind (&OSCRouteObserver::name_changed, this, boost::lambda::_1), OSC::instance());
@@ -89,7 +92,7 @@ OSCRouteObserver::name_changed (const PBD::PropertyChange& what_changed)
 
 	lo_message msg = lo_message_new ();
 
-	lo_message_add_int32 (msg, _route->remote_control_id());
+	lo_message_add_int32 (msg, sid);
 	lo_message_add_string (msg, _route->name().c_str());
 
 	lo_send_message (addr, "/strip/name", msg);
@@ -101,28 +104,11 @@ OSCRouteObserver::send_change_message (string path, boost::shared_ptr<Controllab
 {
 	lo_message msg = lo_message_new ();
 
-	lo_message_add_int32 (msg, _route->remote_control_id());
+	lo_message_add_int32 (msg, sid);
 
 	if (path.find("gain") != std::string::npos) {
-		// find out gainmode
-		string r_url;
-		char * rurl;
-		uint32_t gm = 0;
-		rurl = lo_address_get_url (addr);
-		r_url = rurl;
-		free (rurl);
-		OSC::Surface s;
-		s = OSC::instance()->_surface;
 
-		for (uint32_t it = 0; it < s.size(); ++it) {
-			//find setup for this server
-			if (!s[it].remote_url.find(r_url)){
-				gm = s[it].gainmode;
-				break;
-			}
-		}
-
-		switch (gm) {
+		switch (gainmode) {
 			case OSC::OSCGainMode::DB:
 				path = "/strip/gaindB";
 				if (controllable->get_value() < 1e-15) {

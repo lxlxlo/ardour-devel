@@ -569,8 +569,23 @@ OSC::listen_to_route (boost::shared_ptr<Route> route, lo_address addr)
 			}
 		}
 	}
-
-	OSCRouteObserver* o = new OSCRouteObserver (route, addr);
+	string r_url;
+	char * rurl;
+	uint32_t gm = 0;
+	rurl = lo_address_get_url (addr);
+	r_url = rurl;
+	free (rurl);
+	for (uint32_t it = 0; it < _surface.size(); ++it) {
+		//find setup for this server
+		if (!_surface[it].remote_url.find(r_url)){
+			gm = _surface[it].gainmode;
+			break;
+		}
+	}
+	// if it = _surface.size() then we should probably make a default entry for this surface.
+	uint32_t sid = route->remote_control_id();
+	//std::cout << "gm: " << gm << " sid: " << sid << "\n";
+	OSCRouteObserver* o = new OSCRouteObserver (route, addr, sid, gm);
 	route_observers.push_back (o);
 
 	route->DropReferences.connect (*this, MISSING_INVALIDATOR, boost::bind (&OSC::drop_route, this, boost::weak_ptr<Route> (route)), this);
