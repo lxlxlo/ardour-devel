@@ -480,6 +480,7 @@ OSC::register_callbacks()
 		REGISTER_CALLBACK (serv, "/strip/gainabs", "if", route_set_gain_abs);
 		REGISTER_CALLBACK (serv, "/strip/gaindB", "if", route_set_gain_dB);
 		REGISTER_CALLBACK (serv, "/strip/fader", "if", route_set_gain_fader);
+		REGISTER_CALLBACK (serv, "/strip/fader1024", "if", route_set_gain_fader1024);
 		REGISTER_CALLBACK (serv, "/strip/trimabs", "if", route_set_trim_abs);
 		REGISTER_CALLBACK (serv, "/strip/trimdB", "if", route_set_trim_dB);
 		REGISTER_CALLBACK (serv, "/strip/pan_stereo_position", "if", route_set_pan_stereo_position);
@@ -1187,6 +1188,11 @@ OSC::route_set_gain_fader (int rid, float pos)
 	return route_set_gain_abs (rid, slider_position_to_gain_with_max (pos, 2.0));
 }
 
+int
+OSC::route_set_gain_fader1024 (int rid, float pos)
+{
+	return route_set_gain_abs (rid, slider_position_to_gain_with_max ((pos/1023), 2.0));
+}
 
 int
 OSC::route_set_trim_abs (int rid, float level)
