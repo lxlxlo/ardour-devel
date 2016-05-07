@@ -561,7 +561,7 @@ OSC::listen_to_route (boost::shared_ptr<Route> route, lo_address addr)
 
 		if ((ro = dynamic_cast<OSCRouteObserver*>(*x)) != 0) {
 
-			int res = strcmp(lo_address_get_hostname(ro->address()), lo_address_get_hostname(addr));
+			int res = strcmp(lo_address_get_url(ro->address()), lo_address_get_url(addr));
 
 			if (ro->route() == route && res == 0) {
 				return;
@@ -774,7 +774,7 @@ OSC::catchall (const char *path, const char* types, lo_arg **argv, int argc, lo_
 			uint32_t surf = _surface.size();
 			for (uint32_t it = 0; it < _surface.size(); ++it) {
 				//check if this url is already there
-				if (_surface[it].remote_url.find(r_url)){
+				if (!_surface[it].remote_url.find(r_url)){
 					surf = it;
 					break;
 				}
@@ -789,7 +789,6 @@ OSC::catchall (const char *path, const char* types, lo_arg **argv, int argc, lo_
 			_surface[surf].feedback = argv[2]->i;
 			char* gmode = &argv[3]->s;
 
-			std::cout << "gmode: " << gmode << "\n";
 			if (!strcmp(gmode, "ABS")) {
 				_surface[surf].gainmode = ABS;
 			}else if (!strcmp(gmode, "DB")) {
@@ -799,9 +798,8 @@ OSC::catchall (const char *path, const char* types, lo_arg **argv, int argc, lo_
 			}else if (!strcmp(gmode, "INT1024")) {
 				_surface[surf].gainmode = INT1024;
 			}
-			std::cout << "readback gmode: " << _surface[surf].gainmode << "\n";
-			ret = 0;
 		}
+		ret = 0;
 	} else if (argc == 1 && types[0] == 'f') { // single float -- probably TouchOSC
 		if (!strncmp (path, "/strip/gainabs/", 15) && strlen (path) > 15) {
 			int rid = atoi (&path[15]);
