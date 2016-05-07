@@ -403,7 +403,6 @@ OSC::register_callbacks()
 		REGISTER_CALLBACK (serv, "/scroll_dn_1_track", "f", scroll_dn_1_track);
 		REGISTER_CALLBACK (serv, "/scroll_up_1_page", "f", scroll_up_1_page);
 		REGISTER_CALLBACK (serv, "/scroll_dn_1_page", "f", scroll_dn_1_page);
-		REGISTER_CALLBACK (serv, "/surface", "iiii", set_surface);
 		REGISTER_CALLBACK (serv, "/bank", "i", set_bank);
 		REGISTER_CALLBACK (serv, "/bank_up", "", bank_up);
 		REGISTER_CALLBACK (serv, "/bank_down", "", bank_down);
@@ -718,7 +717,7 @@ OSC::catchall (const char *path, const char* types, lo_arg **argv, int argc, lo_
 
 	len = strlen (path);
 
-	if (len >= 17 && !strcmp (&path[len-15], "/#current_value")) {
+	if (len >= 9 && !strcmp (&path[len-7], "/#current_value")) {
 		current_value_query (path, len, argv, argc, msg);
 		ret = 0;
 
@@ -764,6 +763,45 @@ OSC::catchall (const char *path, const char* types, lo_arg **argv, int argc, lo_
 		}
 
 		ret = 0;
+	} else if (strcmp (path, "/set_surface") == 0) {
+		if (argc == 4) {
+			string r_url;
+			char * rurl;
+			lo_address a = lo_message_get_source (msg);
+			rurl = lo_address_get_url (a);
+			r_url = rurl;
+			free (rurl);
+			uint32_t surf = _surface.size();
+			for (uint32_t it = 0; it < _surface.size(); ++it) {
+				//check if this url is already there
+				if (_surface[it].remote_url.find(r_url)){
+					surf = it;
+					break;
+				}
+			}
+			if (surf == _surface.size()) {
+				OSCSurface s;
+				s.remote_url = r_url;
+				_surface.push_back (s);
+			}
+			_surface[surf].bank_size = argv[0]->i;
+			_surface[surf].strip_types = argv[1]->i;
+			_surface[surf].feedback = argv[2]->i;
+			char* gmode = &argv[3]->s;
+
+			std::cout << "gmode: " << gmode << "\n";
+			if (!strcmp(gmode, "ABS")) {
+				_surface[surf].gainmode = ABS;
+			}else if (!strcmp(gmode, "DB")) {
+				_surface[surf].gainmode = DB;
+			}else if (!strcmp(gmode, "FADER")) {
+				_surface[surf].gainmode = FADER;
+			}else if (!strcmp(gmode, "INT1024")) {
+				_surface[surf].gainmode = INT1024;
+			}
+			std::cout << "readback gmode: " << _surface[surf].gainmode << "\n";
+			ret = 0;
+		}
 	} else if (argc == 1 && types[0] == 'f') { // single float -- probably TouchOSC
 		if (!strncmp (path, "/strip/gainabs/", 15) && strlen (path) > 15) {
 			int rid = atoi (&path[15]);
@@ -1002,15 +1040,11 @@ OSC::routes_list (lo_message msg)
 }
 
 int
-OSC::set_surface (int bank_size, int strip_types, int feedback, int gainmode)
-{
-	//create or modify OSCSurface struct for remote_url
-	return 0;
-}
-
-int
 OSC::set_bank (int bank_start)
 {
+	if (!session) {
+		return -1;
+	}
 	// set bank to bank starting with bank_start RID
 	return 0;
 }
@@ -1018,6 +1052,9 @@ OSC::set_bank (int bank_start)
 int
 OSC::bank_up (void)
 {
+	if (!session) {
+		return -1;
+	}
 	// set bank to bank + bank_size
 	return 0;
 }
@@ -1025,6 +1062,9 @@ OSC::bank_up (void)
 int
 OSC::bank_down (void)
 {
+	if (!session) {
+		return -1;
+	}
 	// set bank to bank - bank_size
 	return 0;
 }

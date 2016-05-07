@@ -102,7 +102,52 @@ OSCRouteObserver::send_change_message (string path, boost::shared_ptr<Controllab
 	lo_message msg = lo_message_new ();
 
 	lo_message_add_int32 (msg, _route->remote_control_id());
-	lo_message_add_float (msg, (float) controllable->get_value());
+
+	if (path.find("gain") != std::string::npos) {
+		// find out gainmode
+		string r_url;
+		char * rurl;
+		uint32_t gm = 0;
+		rurl = lo_address_get_url (addr);
+		r_url = rurl;
+		free (rurl);
+		OSC::Surface s;
+		s = OSC::instance()->_surface;
+
+		for (uint32_t it = 0; it < s.size(); ++it) {
+			//find setup for this server
+			if (!s[it].remote_url.find(r_url)){
+				gm = s[it].gainmode;
+				break;
+			}
+		}
+
+		switch (gm) {
+			case OSC::OSCGainMode::DB:
+				path = "/strip/gaindB";
+				if (controllable->get_value() < 1e-15) {
+					lo_message_add_float (msg, -200);
+				} else {
+					lo_message_add_float (msg, accurate_coefficient_to_dB (controllable->get_value()));
+				}
+				break;
+			case OSC::OSCGainMode::FADER:
+				path = "/strip/fader";
+				lo_message_add_float (msg, gain_to_slider_position (controllable->get_value()));
+				break;
+			case OSC::OSCGainMode::INT1024:
+				path = "/strip/fader1024";
+				lo_message_add_float (msg, gain_to_slider_position (controllable->get_value()) * 1023);
+				break;
+
+//			case OSC::OSCGainMode::ABS:
+				default:
+				lo_message_add_float (msg, controllable->get_value());
+				path = "/strip/gainabs";
+		}
+	} else {
+		lo_message_add_float (msg, (float) controllable->get_value());
+	}
 
 	/* XXX thread issues */
 
@@ -110,23 +155,4 @@ OSCRouteObserver::send_change_message (string path, boost::shared_ptr<Controllab
 
 	lo_send_message (addr, path.c_str(), msg);
 	lo_message_free (msg);
-	if (path.find("gain") != std::string::npos) {
-		//need feedback for gaindB
-		lo_message msg = lo_message_new ();
-		lo_message_add_int32 (msg, _route->remote_control_id());
-		// controllers don't like -inf
-		if (controllable->get_value() < 1e-15) {
-			lo_message_add_float (msg, -200);
-		} else {
-			lo_message_add_float (msg, accurate_coefficient_to_dB (controllable->get_value()));
-		}
-		lo_send_message (addr, "/strip/gaindB", msg);
-		lo_message_free (msg);
-		// feedback fader possition
-		msg = lo_message_new ();
-		lo_message_add_int32 (msg, _route->remote_control_id());
-		lo_message_add_float (msg, gain_to_slider_position (controllable->get_value()));
-		lo_send_message (addr, "/strip/fader", msg);
-		lo_message_free (msg);
-	}
 }

@@ -104,16 +104,17 @@ class OSC : public ARDOUR::ControlProtocol, public AbstractUI<OSCUIRequest>
 // keep a surface's global setup by remote server url
 	struct OSCSurface {
 	public:
-		std::string remote_url;
-		int bank;
-		int bank_size;
-		int strip_types;
-		int feedback;
-		OSCGainMode gainmode;
+		std::string remote_url;	// the url these setting belong to
+		int bank;				// current bank
+		int bank_size;			// size of banks for this surface
+		int strip_types;		// what strip types are a part of this bank
+		int feedback;			// 
+		OSCGainMode gainmode;	// what kind of faders do we have
 	};
 
 // storage for  each surface's settings
-	std::vector<OSCSurface> _surface;
+	typedef std::vector<OSCSurface> Surface;
+	Surface _surface;
 
 	std::string get_server_url ();
 	void set_debug_mode (OSCDebugMode m) { _debugmode = m; }
@@ -320,7 +321,6 @@ class OSC : public ARDOUR::ControlProtocol, public AbstractUI<OSCUIRequest>
         PATH_CALLBACK3(route_set_send_gain_dB,i,i,f);
         PATH_CALLBACK4(route_plugin_parameter,i,i,i,f);
         PATH_CALLBACK3(route_plugin_parameter_print,i,i,i);
-	PATH_CALLBACK4(set_surface, i, i, i, i);
 	PATH_CALLBACK1(set_bank, i,);
 	PATH_CALLBACK(bank_up);
 	PATH_CALLBACK(bank_down);
@@ -341,7 +341,6 @@ class OSC : public ARDOUR::ControlProtocol, public AbstractUI<OSCUIRequest>
 	int route_plugin_parameter_print (int rid, int piid,int par);
 
 	//banking functions
-	int set_surface (int bank_size, int strip_types, int feedback, int gainmode);
 	int set_bank (int bank_start);
 	int bank_up (void);
 	int bank_down (void);
