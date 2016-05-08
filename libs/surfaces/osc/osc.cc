@@ -403,7 +403,6 @@ OSC::register_callbacks()
 		REGISTER_CALLBACK (serv, "/scroll_dn_1_track", "f", scroll_dn_1_track);
 		REGISTER_CALLBACK (serv, "/scroll_up_1_page", "f", scroll_up_1_page);
 		REGISTER_CALLBACK (serv, "/scroll_dn_1_page", "f", scroll_dn_1_page);
-		REGISTER_CALLBACK (serv, "/bank", "i", set_bank);
 		REGISTER_CALLBACK (serv, "/bank_up", "", bank_up);
 		REGISTER_CALLBACK (serv, "/bank_down", "", bank_down);
 
@@ -569,6 +568,7 @@ OSC::listen_to_route (boost::shared_ptr<Route> route, lo_address addr)
 			}
 		}
 	}
+	// this next bit should be replaced with a get_surface(lo_address addr)
 	string r_url;
 	char * rurl;
 	uint32_t gm = 0;
@@ -1054,7 +1054,7 @@ OSC::routes_list (lo_message msg)
 }
 
 int
-OSC::set_bank (int bank_start)
+OSC::set_bank (int bank_start, lo_message msg)
 {
 	if (!session) {
 		return -1;
@@ -1064,7 +1064,7 @@ OSC::set_bank (int bank_start)
 }
 
 int
-OSC::bank_up (void)
+OSC::bank_up (lo_message msg)
 {
 	if (!session) {
 		return -1;
@@ -1074,7 +1074,7 @@ OSC::bank_up (void)
 }
 
 int
-OSC::bank_down (void)
+OSC::bank_down (lo_message msg)
 {
 	if (!session) {
 		return -1;

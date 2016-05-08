@@ -22,6 +22,7 @@
 
 #include <string>
 #include <vector>
+#include <bitset>
 
 #include <sys/time.h>
 #include <pthread.h>
@@ -93,7 +94,7 @@ class OSC : public ARDOUR::ControlProtocol, public AbstractUI<OSCUIRequest>
 		All
 	};
 
-// this is used for feed back so we only need to send one kind
+// this is used for gain control feedback so we only need to send one kind
 	enum OSCGainMode {
 		ABS,
 		DB,
@@ -107,8 +108,8 @@ class OSC : public ARDOUR::ControlProtocol, public AbstractUI<OSCUIRequest>
 		std::string remote_url;	// the url these setting belong to
 		int bank;				// current bank
 		int bank_size;			// size of banks for this surface
-		int strip_types;		// what strip types are a part of this bank
-		int feedback;			// 
+		std::bitset<8> strip_types;		// what strip types are a part of this bank
+		std::bitset<8> feedback;			// What is fed back? strips/meters/timecode/bar_beat/global
 		OSCGainMode gainmode;	// what kind of faders do we have
 	};
 
@@ -184,6 +185,8 @@ class OSC : public ARDOUR::ControlProtocol, public AbstractUI<OSCUIRequest>
 	PATH_CALLBACK_MSG(transport_frame);
 	PATH_CALLBACK_MSG(transport_speed);
 	PATH_CALLBACK_MSG(record_enabled);
+	PATH_CALLBACK_MSG(bank_up);
+	PATH_CALLBACK_MSG(bank_down);
 
 #define PATH_CALLBACK(name) \
         static int _ ## name (const char *path, const char *types, lo_arg **argv, int argc, void *data, void *user_data) { \
@@ -322,9 +325,6 @@ class OSC : public ARDOUR::ControlProtocol, public AbstractUI<OSCUIRequest>
         PATH_CALLBACK3(route_set_send_gain_dB,i,i,f);
         PATH_CALLBACK4(route_plugin_parameter,i,i,i,f);
         PATH_CALLBACK3(route_plugin_parameter_print,i,i,i);
-	PATH_CALLBACK1(set_bank, i,);
-	PATH_CALLBACK(bank_up);
-	PATH_CALLBACK(bank_down);
 
 	int route_mute (int rid, int yn);
 	int route_solo (int rid, int yn);
@@ -343,9 +343,9 @@ class OSC : public ARDOUR::ControlProtocol, public AbstractUI<OSCUIRequest>
 	int route_plugin_parameter_print (int rid, int piid,int par);
 
 	//banking functions
-	int set_bank (int bank_start);
-	int bank_up (void);
-	int bank_down (void);
+	int set_bank (int bank_start, lo_message msg);
+	int bank_up (lo_message msg);
+	int bank_down (lo_message msg);
 
 	void listen_to_route (boost::shared_ptr<ARDOUR::Route>, lo_address);
 	void end_listen (boost::shared_ptr<ARDOUR::Route>, lo_address);
