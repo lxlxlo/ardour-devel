@@ -570,7 +570,7 @@ OSC::listen_to_route (boost::shared_ptr<Route> route, lo_address addr)
 	}
 
 	OSCSurface *s = get_surface(addr);
-	uint32_t sid = route->remote_control_id();
+	uint32_t sid = get_sid (route->remote_control_id(), addr);
 	OSCRouteObserver* o = new OSCRouteObserver (route, addr, sid, s->gainmode);
 	route_observers.push_back (o);
 
@@ -616,7 +616,7 @@ OSC::end_listen (boost::shared_ptr<Route> r, lo_address addr)
 
 		if ((ro = dynamic_cast<OSCRouteObserver*>(*x)) != 0) {
 
-			int res = strcmp(lo_address_get_hostname(ro->address()), lo_address_get_hostname(addr));
+			int res = strcmp(lo_address_get_url(ro->address()), lo_address_get_url(addr));
 
 			if (ro->route() == r && res == 0) {
 				delete *x;
@@ -782,34 +782,35 @@ OSC::catchall (const char *path, const char* types, lo_arg **argv, int argc, lo_
 			}else if (!strcmp(gmode, "INT1024")) {
 				s->gainmode = INT1024;
 			}
+			set_bank(s->bank, msg);
 		}
 		ret = 0;
 	} else if (argc == 1 && types[0] == 'f') { // single float -- probably TouchOSC
 		if (!strncmp (path, "/strip/gainabs/", 15) && strlen (path) > 15) {
 			int rid = atoi (&path[15]);
 			// use some power-scale mapping??
-			route_set_gain_abs (rid, argv[0]->f);
+			route_set_gain_abs (rid, argv[0]->f, msg);
 			ret = 0;
 		}
 		else if (!strncmp (path, "/strip/trimabs/", 15) && strlen (path) > 15) {
 			int rid = atoi (&path[15]);
 			// normalize 0..1 ?
-			route_set_trim_abs (rid, argv[0]->f);
+			route_set_trim_abs (rid, argv[0]->f, msg);
 			ret = 0;
 		}
 		else if (!strncmp (path, "/strip/mute/", 12) && strlen (path) > 12) {
 			int rid = atoi (&path[12]);
-			route_mute (rid, argv[0]->f == 1.0);
+			route_mute (rid, argv[0]->f == 1.0, msg);
 			ret = 0;
 		}
 		else if (!strncmp (path, "/strip/solo/", 12) && strlen (path) > 12) {
 			int rid = atoi (&path[12]);
-			route_solo (rid, argv[0]->f == 1.0);
+			route_solo (rid, argv[0]->f == 1.0, msg);
 			ret = 0;
 		}
 		else if (!strncmp (path, "/strip/recenable/", 17) && strlen (path) > 17) {
 			int rid = atoi (&path[17]);
-			route_recenable (rid, argv[0]->f == 1.0);
+			route_recenable (rid, argv[0]->f == 1.0, msg);
 			ret = 0;
 		}
 	}
@@ -1038,17 +1039,83 @@ OSC::get_surface (lo_address addr)
 	// No surface create one with default values
 	OSCSurface s;
 	s.remote_url = r_url;
+	s.bank = 1;
+	s.bank_size = 0;
+	s.strip_types = 0; // change me when we have strip types
+	s.feedback = 0;
+	s.gainmode = ABS;
 	_surface.push_back (s);
 	return &_surface[_surface.size() - 1];
 }
 
+/*
+ * This gets called not only when bank changes but also:
+ *  - bank size change
+ *  - feedback change
+ *  - strip types changes
+ *  - fadermode changes
+ *  - stripable creation/deletion/flag
+ *  - to refresh what is "displayed"
+ * Basically any time the bank needs to be rebuilt
+ */
 int
-OSC::set_bank (int bank_start, lo_message msg)
+OSC::set_bank (uint32_t bank_start, lo_message msg)
 {
 	if (!session) {
 		return -1;
 	}
-	// set bank to bank starting with bank_start RID
+	if (!session->nroutes()) {
+		return -1;
+	}
+	// don't include monitor or master in count for now
+	uint32_t nroutes;
+	if (session->route_by_remote_id (319)) {
+		nroutes = session->nroutes() - 2;
+	} else {
+		nroutes = session->nroutes() - 1;
+	}
+	// undo all listeners for this url
+	for (int n = 1; n < (int) nroutes; ++n) {
+
+		boost::shared_ptr<Route> r = session->route_by_remote_id (n);
+
+		if (r) {
+			end_listen(r, lo_message_get_source (msg));
+		}
+	}
+
+	OSCSurface *s = get_surface(lo_message_get_source (msg));
+	uint32_t b_size;
+
+	if (!s->bank_size) {
+		// no banking
+		b_size = nroutes;
+	} else {
+		b_size = s->bank_size;
+	}
+
+	// Do limits checking
+	if (bank_start < 1) bank_start = 1;
+	if (b_size >= nroutes)  {
+		bank_start = 1;
+	} else if (!(bank_start <= nroutes)) {
+		bank_start = (uint32_t)(nroutes - b_size);
+	}
+
+	//save bank in case we have had to change it
+	s->bank = bank_start;
+
+	if (s->feedback[0]) {
+		for (int n = bank_start; n < (int) (b_size + bank_start); ++n) {
+			// this next will eventually include strip types
+
+			boost::shared_ptr<Route> r = session->route_by_remote_id (n);
+
+			if (r) {
+			listen_to_route(r, lo_message_get_source (msg));
+			}
+		}
+	}
 	return 0;
 }
 
@@ -1058,7 +1125,8 @@ OSC::bank_up (lo_message msg)
 	if (!session) {
 		return -1;
 	}
-	// set bank to bank + bank_size
+	OSCSurface *s = get_surface(lo_message_get_source (msg));
+	set_bank (s->bank + s->bank_size, msg);
 	return 0;
 }
 
@@ -1068,8 +1136,27 @@ OSC::bank_down (lo_message msg)
 	if (!session) {
 		return -1;
 	}
-	// set bank to bank - bank_size
+	OSCSurface *s = get_surface(lo_message_get_source (msg));
+	if (s->bank < s->bank_size) {
+		set_bank (1, msg);
+	} else {
+		set_bank (s->bank - s->bank_size, msg);
+	}
 	return 0;
+}
+
+uint32_t
+OSC::get_sid (uint32_t rid, lo_address addr)
+{
+	OSCSurface *s = get_surface(addr);
+	return rid - s->bank + 1;
+}
+
+uint32_t
+OSC::get_rid (uint32_t sid, lo_address addr)
+{
+	OSCSurface *s = get_surface(addr);
+	return sid + s->bank - 1;
 }
 
 void
@@ -1122,9 +1209,10 @@ OSC::record_enabled (lo_message msg)
 
 
 int
-OSC::route_mute (int rid, int yn)
+OSC::route_mute (int sid, int yn, lo_message msg)
 {
 	if (!session) return -1;
+	int rid = get_rid (sid, lo_message_get_source (msg));
 
 	boost::shared_ptr<Route> r = session->route_by_remote_id (rid);
 
@@ -1136,9 +1224,10 @@ OSC::route_mute (int rid, int yn)
 }
 
 int
-OSC::route_solo (int rid, int yn)
+OSC::route_solo (int sid, int yn, lo_message msg)
 {
 	if (!session) return -1;
+	int rid = get_rid (sid, lo_message_get_source (msg));
 
 	boost::shared_ptr<Route> r = session->route_by_remote_id (rid);
 
@@ -1150,9 +1239,10 @@ OSC::route_solo (int rid, int yn)
 }
 
 int
-OSC::route_recenable (int rid, int yn)
+OSC::route_recenable (int sid, int yn, lo_message msg)
 {
 	if (!session) return -1;
+	int rid = get_rid (sid, lo_message_get_source (msg));
 
 	boost::shared_ptr<Route> r = session->route_by_remote_id (rid);
 
@@ -1164,9 +1254,10 @@ OSC::route_recenable (int rid, int yn)
 }
 
 int
-OSC::route_set_gain_abs (int rid, float level)
+OSC::route_set_gain_abs (int sid, float level, lo_message msg)
 {
 	if (!session) return -1;
+	int rid = get_rid (sid, lo_message_get_source (msg));
 
 	boost::shared_ptr<Route> r = session->route_by_remote_id (rid);
 
@@ -1178,30 +1269,31 @@ OSC::route_set_gain_abs (int rid, float level)
 }
 
 int
-OSC::route_set_gain_dB (int rid, float dB)
+OSC::route_set_gain_dB (int sid, float dB, lo_message msg)
 {
 	if (dB < -192) {
-		return route_set_gain_abs (rid, 0.0);
+		return route_set_gain_abs (sid, 0.0, msg);
 	}
-	return route_set_gain_abs (rid, dB_to_coefficient (dB));
+	return route_set_gain_abs (sid, dB_to_coefficient (dB), msg);
 }
 
 int
-OSC::route_set_gain_fader (int rid, float pos)
+OSC::route_set_gain_fader (int sid, float pos, lo_message msg)
 {
-	return route_set_gain_abs (rid, slider_position_to_gain_with_max (pos, 2.0));
+	return route_set_gain_abs (sid, slider_position_to_gain_with_max (pos, 2.0), msg);
 }
 
 int
-OSC::route_set_gain_fader1024 (int rid, float pos)
+OSC::route_set_gain_fader1024 (int sid, float pos, lo_message msg)
 {
-	return route_set_gain_abs (rid, slider_position_to_gain_with_max ((pos/1023), 2.0));
+	return route_set_gain_abs (sid, slider_position_to_gain_with_max ((pos/1023), 2.0), msg);
 }
 
 int
-OSC::route_set_trim_abs (int rid, float level)
+OSC::route_set_trim_abs (int sid, float level, lo_message msg)
 {
 	if (!session) return -1;
+	int rid = get_rid (sid, lo_message_get_source (msg));
 
 	boost::shared_ptr<Route> r = session->route_by_remote_id (rid);
 
@@ -1213,16 +1305,17 @@ OSC::route_set_trim_abs (int rid, float level)
 }
 
 int
-OSC::route_set_trim_dB (int rid, float dB)
+OSC::route_set_trim_dB (int sid, float dB, lo_message msg)
 {
-	return route_set_trim_abs(rid, dB_to_coefficient (dB));
+	return route_set_trim_abs(sid, dB_to_coefficient (dB), msg);
 }
 
 
 int
-OSC::route_set_pan_stereo_position (int rid, float pos)
+OSC::route_set_pan_stereo_position (int sid, float pos, lo_message msg)
 {
 	if (!session) return -1;
+	int rid = get_rid (sid, lo_message_get_source (msg));
 
 	boost::shared_ptr<Route> r = session->route_by_remote_id (rid);
 
@@ -1238,9 +1331,10 @@ OSC::route_set_pan_stereo_position (int rid, float pos)
 }
 
 int
-OSC::route_set_pan_stereo_width (int rid, float pos)
+OSC::route_set_pan_stereo_width (int sid, float pos, lo_message msg)
 {
 	if (!session) return -1;
+	int rid = get_rid (sid, lo_message_get_source (msg));
 
 	boost::shared_ptr<Route> r = session->route_by_remote_id (rid);
 
@@ -1256,11 +1350,12 @@ OSC::route_set_pan_stereo_width (int rid, float pos)
 }
 
 int
-OSC::route_set_send_gain_abs (int rid, int sid, float val)
+OSC::route_set_send_gain_abs (int ssid, int sid, float val, lo_message msg)
 {
 	if (!session) {
 		return -1;
 	}
+	int rid = get_rid (ssid, lo_message_get_source (msg));
 
 	boost::shared_ptr<Route> r = session->route_by_remote_id (rid);
 
@@ -1288,11 +1383,12 @@ OSC::route_set_send_gain_abs (int rid, int sid, float val)
 }
 
 int
-OSC::route_set_send_gain_dB (int rid, int sid, float val)
+OSC::route_set_send_gain_dB (int ssid, int sid, float val, lo_message msg)
 {
 	if (!session) {
 		return -1;
 	}
+	int rid = get_rid (ssid, lo_message_get_source (msg));
 
 	boost::shared_ptr<Route> r = session->route_by_remote_id (rid);
 
@@ -1320,10 +1416,11 @@ OSC::route_set_send_gain_dB (int rid, int sid, float val)
 }
 
 int
-OSC::route_plugin_parameter (int rid, int piid, int par, float val)
+OSC::route_plugin_parameter (int sid, int piid, int par, float val, lo_message msg)
 {
 	if (!session)
 		return -1;
+	int rid = get_rid (sid, lo_message_get_source (msg));
 
 	boost::shared_ptr<Route> r = session->route_by_remote_id (rid);
 
@@ -1378,11 +1475,12 @@ OSC::route_plugin_parameter (int rid, int piid, int par, float val)
 }
 
 int
-OSC::route_plugin_parameter_print (int rid, int piid, int par)
+OSC::route_plugin_parameter_print (int sid, int piid, int par, lo_message msg)
 {
 	if (!session) {
 		return -1;
 	}
+	int rid = get_rid (sid, lo_message_get_source (msg));
 
 	boost::shared_ptr<Route> r = session->route_by_remote_id (rid);
 

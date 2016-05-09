@@ -153,6 +153,8 @@ class OSC : public ARDOUR::ControlProtocol, public AbstractUI<OSCUIRequest>
 
 	std::string get_unix_server_url ();
 	OSCSurface * get_surface (lo_address addr);
+	uint32_t get_sid (uint32_t rid, lo_address addr);
+	uint32_t get_rid (uint32_t sid, lo_address addr);
 
 	void send_current_value (const char* path, lo_arg** argv, int argc, lo_message msg);
 	void current_value_query (const char* path, size_t len, lo_arg **argv, int argc, lo_message msg);
@@ -285,14 +287,26 @@ class OSC : public ARDOUR::ControlProtocol, public AbstractUI<OSCUIRequest>
 		return 0;						\
 	}
 
+#define PATH_CALLBACK2_MSG(name,arg1type,arg2type)			\
+        static int _ ## name (const char *path, const char *types, lo_arg **argv, int argc, void *data, void *user_data) { \
+		return static_cast<OSC*>(user_data)->cb_ ## name (path, types, argv, argc, data); \
+        } \
+        int cb_ ## name (const char *path, const char *types, lo_arg **argv, int argc, void *data) { \
+		OSC_DEBUG;              \
+                if (argc > 1) {						\
+			name (argv[0]->arg1type, argv[1]->arg2type, data); \
+                }							\
+		return 0;						\
+	}
+
 #define PATH_CALLBACK3(name,arg1type,arg2type,arg3type)                \
         static int _ ## name (const char *path, const char *types, lo_arg **argv, int argc, void *data, void *user_data) { \
                return static_cast<OSC*>(user_data)->cb_ ## name (path, types, argv, argc, data); \
         } \
-        int cb_ ## name (const char *path, const char *types, lo_arg **argv, int argc, void *) { \
+        int cb_ ## name (const char *path, const char *types, lo_arg **argv, int argc, void *data) { \
 		OSC_DEBUG;              \
                 if (argc > 1) {                                                \
-                 name (argv[0]->arg1type, argv[1]->arg2type,argv[2]->arg3type); \
+                 name (argv[0]->arg1type, argv[1]->arg2type,argv[2]->arg3type, data); \
                 }                                                      \
                return 0;                                               \
        }
@@ -301,50 +315,50 @@ class OSC : public ARDOUR::ControlProtocol, public AbstractUI<OSCUIRequest>
         static int _ ## name (const char *path, const char *types, lo_arg **argv, int argc, void *data, void *user_data) { \
                return static_cast<OSC*>(user_data)->cb_ ## name (path, types, argv, argc, data); \
         } \
-        int cb_ ## name (const char *path, const char *types, lo_arg **argv, int argc, void *) { \
+        int cb_ ## name (const char *path, const char *types, lo_arg **argv, int argc, void *data) { \
 		OSC_DEBUG;              \
                 if (argc > 1) {                                                \
-                 name (argv[0]->arg1type, argv[1]->arg2type,argv[2]->arg3type,argv[3]->arg4type); \
+                 name (argv[0]->arg1type, argv[1]->arg2type,argv[2]->arg3type,argv[3]->arg4type, data); \
                 }                                                      \
                return 0;                                               \
        }
 
         PATH_CALLBACK2(locate,i,i);
         PATH_CALLBACK2(loop_location,i,i);
-	PATH_CALLBACK2(route_mute,i,i);
-	PATH_CALLBACK2(route_solo,i,i);
-	PATH_CALLBACK2(route_recenable,i,i);
-	PATH_CALLBACK2(route_set_gain_abs,i,f);
-	PATH_CALLBACK2(route_set_gain_dB,i,f);
-	PATH_CALLBACK2(route_set_gain_fader,i,f);
-	PATH_CALLBACK2(route_set_gain_fader1024,i,f);
-	PATH_CALLBACK2(route_set_trim_abs,i,f);
-	PATH_CALLBACK2(route_set_trim_dB,i,f);
-	PATH_CALLBACK2(route_set_pan_stereo_position,i,f);
-	PATH_CALLBACK2(route_set_pan_stereo_width,i,f);
+	PATH_CALLBACK2_MSG(route_mute,i,i);
+	PATH_CALLBACK2_MSG(route_solo,i,i);
+	PATH_CALLBACK2_MSG(route_recenable,i,i);
+	PATH_CALLBACK2_MSG(route_set_gain_abs,i,f);
+	PATH_CALLBACK2_MSG(route_set_gain_dB,i,f);
+	PATH_CALLBACK2_MSG(route_set_gain_fader,i,f);
+	PATH_CALLBACK2_MSG(route_set_gain_fader1024,i,f);
+	PATH_CALLBACK2_MSG(route_set_trim_abs,i,f);
+	PATH_CALLBACK2_MSG(route_set_trim_dB,i,f);
+	PATH_CALLBACK2_MSG(route_set_pan_stereo_position,i,f);
+	PATH_CALLBACK2_MSG(route_set_pan_stereo_width,i,f);
         PATH_CALLBACK3(route_set_send_gain_abs,i,i,f);
         PATH_CALLBACK3(route_set_send_gain_dB,i,i,f);
         PATH_CALLBACK4(route_plugin_parameter,i,i,i,f);
         PATH_CALLBACK3(route_plugin_parameter_print,i,i,i);
 
-	int route_mute (int rid, int yn);
-	int route_solo (int rid, int yn);
-	int route_recenable (int rid, int yn);
-	int route_set_gain_abs (int rid, float level);
-	int route_set_gain_dB (int rid, float dB);
-	int route_set_gain_fader (int rid, float pos);
-	int route_set_gain_fader1024 (int rid, float pos);
-	int route_set_trim_abs (int rid, float level);
-	int route_set_trim_dB (int rid, float dB);
-	int route_set_pan_stereo_position (int rid, float left_right_fraction);
-	int route_set_pan_stereo_width (int rid, float percent);
-	int route_set_send_gain_abs (int rid, int sid, float val);
-	int route_set_send_gain_dB (int rid, int sid, float val);
-	int route_plugin_parameter (int rid, int piid,int par, float val);
-	int route_plugin_parameter_print (int rid, int piid,int par);
+	int route_mute (int rid, int yn, lo_message msg);
+	int route_solo (int rid, int yn, lo_message msg);
+	int route_recenable (int rid, int yn, lo_message msg);
+	int route_set_gain_abs (int rid, float level, lo_message msg);
+	int route_set_gain_dB (int rid, float dB, lo_message msg);
+	int route_set_gain_fader (int rid, float pos, lo_message msg);
+	int route_set_gain_fader1024 (int rid, float pos, lo_message msg);
+	int route_set_trim_abs (int rid, float level, lo_message msg);
+	int route_set_trim_dB (int rid, float dB, lo_message msg);
+	int route_set_pan_stereo_position (int rid, float left_right_fraction, lo_message msg);
+	int route_set_pan_stereo_width (int rid, float percent, lo_message msg);
+	int route_set_send_gain_abs (int rid, int sid, float val, lo_message msg);
+	int route_set_send_gain_dB (int rid, int sid, float val, lo_message msg);
+	int route_plugin_parameter (int rid, int piid,int par, float val, lo_message msg);
+	int route_plugin_parameter_print (int rid, int piid,int par, lo_message msg);
 
 	//banking functions
-	int set_bank (int bank_start, lo_message msg);
+	int set_bank (uint32_t bank_start, lo_message msg);
 	int bank_up (lo_message msg);
 	int bank_down (lo_message msg);
 
