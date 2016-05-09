@@ -152,6 +152,7 @@ class OSC : public ARDOUR::ControlProtocol, public AbstractUI<OSCUIRequest>
 	// end "Application Hook" handles
 
 	std::string get_unix_server_url ();
+	OSCSurface * get_surface (lo_address addr);
 
 	void send_current_value (const char* path, lo_arg** argv, int argc, lo_message msg);
 	void current_value_query (const char* path, size_t len, lo_arg **argv, int argc, lo_message msg);

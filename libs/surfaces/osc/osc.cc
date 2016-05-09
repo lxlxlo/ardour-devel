@@ -568,24 +568,10 @@ OSC::listen_to_route (boost::shared_ptr<Route> route, lo_address addr)
 			}
 		}
 	}
-	// this next bit should be replaced with a get_surface(lo_address addr)
-	string r_url;
-	char * rurl;
-	uint32_t gm = 0;
-	rurl = lo_address_get_url (addr);
-	r_url = rurl;
-	free (rurl);
-	for (uint32_t it = 0; it < _surface.size(); ++it) {
-		//find setup for this server
-		if (!_surface[it].remote_url.find(r_url)){
-			gm = _surface[it].gainmode;
-			break;
-		}
-	}
-	// if it = _surface.size() then we should probably make a default entry for this surface.
+
+	OSCSurface *s = get_surface(addr);
 	uint32_t sid = route->remote_control_id();
-	//std::cout << "gm: " << gm << " sid: " << sid << "\n";
-	OSCRouteObserver* o = new OSCRouteObserver (route, addr, sid, gm);
+	OSCRouteObserver* o = new OSCRouteObserver (route, addr, sid, s->gainmode);
 	route_observers.push_back (o);
 
 	route->DropReferences.connect (*this, MISSING_INVALIDATOR, boost::bind (&OSC::drop_route, this, boost::weak_ptr<Route> (route)), this);
@@ -781,38 +767,20 @@ OSC::catchall (const char *path, const char* types, lo_arg **argv, int argc, lo_
 		ret = 0;
 	} else if (strcmp (path, "/set_surface") == 0) {
 		if (argc == 4) {
-			string r_url;
-			char * rurl;
-			lo_address a = lo_message_get_source (msg);
-			rurl = lo_address_get_url (a);
-			r_url = rurl;
-			free (rurl);
-			uint32_t surf = _surface.size();
-			for (uint32_t it = 0; it < _surface.size(); ++it) {
-				//check if this url is already there
-				if (!_surface[it].remote_url.find(r_url)){
-					surf = it;
-					break;
-				}
-			}
-			if (surf == _surface.size()) {
-				OSCSurface s;
-				s.remote_url = r_url;
-				_surface.push_back (s);
-			}
-			_surface[surf].bank_size = argv[0]->i;
-			_surface[surf].strip_types = argv[1]->i;
-			_surface[surf].feedback = argv[2]->i;
+			OSCSurface *s = get_surface(lo_message_get_source (msg));
+			s->bank_size = argv[0]->i;
+			s->strip_types = argv[1]->i;
+			s->feedback = argv[2]->i;
 			char* gmode = &argv[3]->s;
 
 			if (!strcmp(gmode, "ABS")) {
-				_surface[surf].gainmode = ABS;
+				s->gainmode = ABS;
 			}else if (!strcmp(gmode, "DB")) {
-				_surface[surf].gainmode = DB;
+				s->gainmode = DB;
 			}else if (!strcmp(gmode, "FADER")) {
-				_surface[surf].gainmode = FADER;
+				s->gainmode = FADER;
 			}else if (!strcmp(gmode, "INT1024")) {
-				_surface[surf].gainmode = INT1024;
+				s->gainmode = INT1024;
 			}
 		}
 		ret = 0;
@@ -1051,6 +1019,27 @@ OSC::routes_list (lo_message msg)
 	lo_send_message (lo_message_get_source (msg), "#reply", reply);
 
 	lo_message_free (reply);
+}
+
+OSC::OSCSurface *
+OSC::get_surface (lo_address addr)
+{
+	string r_url;
+	char * rurl;
+	rurl = lo_address_get_url (addr);
+	r_url = rurl;
+	free (rurl);
+	for (uint32_t it = 0; it < _surface.size(); ++it) {
+		//find setup for this server
+		if (!_surface[it].remote_url.find(r_url)){
+			return &_surface[it];
+		}
+	}
+	// No surface create one with default values
+	OSCSurface s;
+	s.remote_url = r_url;
+	_surface.push_back (s);
+	return &_surface[_surface.size() - 1];
 }
 
 int
