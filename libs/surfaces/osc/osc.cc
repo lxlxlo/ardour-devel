@@ -1075,7 +1075,7 @@ OSC::set_bank (uint32_t bank_start, lo_message msg)
 		nroutes = session->nroutes() - 1;
 	}
 	// undo all listeners for this url
-	for (int n = 1; n < (int) nroutes; ++n) {
+	for (int n = 1; n < (int) nroutes + 1; ++n) {
 
 		boost::shared_ptr<Route> r = session->route_by_remote_id (n);
 
@@ -1098,8 +1098,8 @@ OSC::set_bank (uint32_t bank_start, lo_message msg)
 	if (bank_start < 1) bank_start = 1;
 	if (b_size >= nroutes)  {
 		bank_start = 1;
-	} else if (!(bank_start <= nroutes)) {
-		bank_start = (uint32_t)(nroutes - b_size);
+	} else if (!(bank_start < nroutes + 1)) {
+		bank_start = (uint32_t)((nroutes - b_size) + 1);
 	}
 
 	//save bank in case we have had to change it
@@ -1113,6 +1113,14 @@ OSC::set_bank (uint32_t bank_start, lo_message msg)
 
 			if (r) {
 			listen_to_route(r, lo_message_get_source (msg));
+			} else { // if the route doesn't exist clear the text.
+				lo_message clrdisp = lo_message_new ();
+
+				lo_message_add_int32 (clrdisp, get_sid (n, lo_message_get_source (msg)));
+				lo_message_add_string (clrdisp, "");
+
+				lo_send_message (lo_message_get_source (msg), "/strip/name", clrdisp);
+				lo_message_free (clrdisp);
 			}
 		}
 	}
