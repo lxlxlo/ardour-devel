@@ -123,7 +123,11 @@ OSCRouteObserver::send_change_message (string path, boost::shared_ptr<Controllab
 				break;
 			case OSC::OSCGainMode::INT1024:
 				path = "/strip/fader1024";
-				lo_message_add_float (msg, gain_to_slider_position (controllable->get_value()) * 1023);
+				if (controllable->get_value() == 1) {
+					lo_message_add_int32 (msg, 800);
+				} else {
+					lo_message_add_int32 (msg, gain_to_slider_position (controllable->get_value()) * 1023);
+				}
 				break;
 
 //			case OSC::OSCGainMode::ABS:

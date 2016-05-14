@@ -1294,7 +1294,11 @@ OSC::route_set_gain_fader (int sid, float pos, lo_message msg)
 int
 OSC::route_set_gain_fader1024 (int sid, float pos, lo_message msg)
 {
-	return route_set_gain_abs (sid, slider_position_to_gain_with_max ((pos/1023), 2.0), msg);
+	if ((pos > 799.5) & (pos < 800.5)) {
+		return route_set_gain_abs (sid, 1.0, msg);
+	} else {
+		return route_set_gain_abs (sid, slider_position_to_gain_with_max ((pos/1023), 2.0), msg);
+	}
 }
 
 int
