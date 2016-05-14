@@ -275,6 +275,21 @@ class OSC : public ARDOUR::ControlProtocol, public AbstractUI<OSCUIRequest>
 	PATH_CALLBACK1(jump_by_bars,f,);
 	PATH_CALLBACK1(jump_by_seconds,f,);
 
+#define PATH_CALLBACK1_MSG(name,type)			\
+        static int _ ## name (const char *path, const char *types, lo_arg **argv, int argc, void *data, void *user_data) { \
+		return static_cast<OSC*>(user_data)->cb_ ## name (path, types, argv, argc, data); \
+        } \
+        int cb_ ## name (const char *path, const char *types, lo_arg **argv, int argc, void *data) { \
+		OSC_DEBUG;              \
+                if (argc > 0) {						\
+			name (argv[0]->type, data); \
+                }							\
+		return 0;						\
+	}
+
+	PATH_CALLBACK1_MSG(master_set_gain,f);
+	//PATH_CALLBACK1_MSG(master_set_fader,i,);
+
 #define PATH_CALLBACK2(name,arg1type,arg2type)			\
         static int _ ## name (const char *path, const char *types, lo_arg **argv, int argc, void *data, void *user_data) { \
 		return static_cast<OSC*>(user_data)->cb_ ## name (path, types, argv, argc, data); \
@@ -361,6 +376,9 @@ class OSC : public ARDOUR::ControlProtocol, public AbstractUI<OSCUIRequest>
 	int set_bank (uint32_t bank_start, lo_message msg);
 	int bank_up (lo_message msg);
 	int bank_down (lo_message msg);
+
+	int master_set_gain (float dB, lo_message msg);
+	//int master_set_fader (uint32_t position, lo_message msg);
 
 	void listen_to_route (boost::shared_ptr<ARDOUR::Route>, lo_address);
 	void end_listen (boost::shared_ptr<ARDOUR::Route>, lo_address);

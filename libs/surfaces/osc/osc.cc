@@ -405,6 +405,7 @@ OSC::register_callbacks()
 		REGISTER_CALLBACK (serv, "/scroll_dn_1_page", "f", scroll_dn_1_page);
 		REGISTER_CALLBACK (serv, "/bank_up", "", bank_up);
 		REGISTER_CALLBACK (serv, "/bank_down", "", bank_down);
+		REGISTER_CALLBACK (serv, "/master/gain", "f", master_set_gain);
 
 
 		/*
@@ -766,6 +767,7 @@ OSC::catchall (const char *path, const char* types, lo_arg **argv, int argc, lo_
 
 		ret = 0;
 	} else if (strcmp (path, "/set_surface") == 0) {
+		// this could now be moved to it's own function
 		if (argc == 4) {
 			OSCSurface *s = get_surface(lo_message_get_source (msg));
 			s->bank_size = argv[0]->i;
@@ -1215,6 +1217,16 @@ OSC::record_enabled (lo_message msg)
 	lo_message_free (reply);
 }
 
+// master monitor calls
+int
+OSC::master_set_gain (float dB, lo_message msg)
+{
+	if (!session) return -1;
+	if (dB < -192) {
+		return route_set_gain_abs (318, 0.0, msg);
+	}
+	return route_set_gain_abs (318, dB_to_coefficient (dB), msg);
+}
 
 int
 OSC::route_mute (int sid, int yn, lo_message msg)
@@ -1262,11 +1274,9 @@ OSC::route_recenable (int sid, int yn, lo_message msg)
 }
 
 int
-OSC::route_set_gain_abs (int sid, float level, lo_message msg)
+OSC::route_set_gain_abs (int rid, float level, lo_message msg)
 {
 	if (!session) return -1;
-	int rid = get_rid (sid, lo_message_get_source (msg));
-
 	boost::shared_ptr<Route> r = session->route_by_remote_id (rid);
 
 	if (r) {
@@ -1279,10 +1289,12 @@ OSC::route_set_gain_abs (int sid, float level, lo_message msg)
 int
 OSC::route_set_gain_dB (int sid, float dB, lo_message msg)
 {
+	if (!session) return -1;
+	int rid = get_rid (sid, lo_message_get_source (msg));
 	if (dB < -192) {
-		return route_set_gain_abs (sid, 0.0, msg);
+		return route_set_gain_abs (rid, 0.0, msg);
 	}
-	return route_set_gain_abs (sid, dB_to_coefficient (dB), msg);
+	return route_set_gain_abs (rid, dB_to_coefficient (dB), msg);
 }
 
 int
@@ -1294,10 +1306,12 @@ OSC::route_set_gain_fader (int sid, float pos, lo_message msg)
 int
 OSC::route_set_gain_fader1024 (int sid, float pos, lo_message msg)
 {
+	if (!session) return -1;
+	int rid = get_rid (sid, lo_message_get_source (msg));
 	if ((pos > 799.5) & (pos < 800.5)) {
-		return route_set_gain_abs (sid, 1.0, msg);
+		return route_set_gain_abs (rid, 1.0, msg);
 	} else {
-		return route_set_gain_abs (sid, slider_position_to_gain_with_max ((pos/1023), 2.0), msg);
+		return route_set_gain_abs (rid, slider_position_to_gain_with_max ((pos/1023), 2.0), msg);
 	}
 }
 
