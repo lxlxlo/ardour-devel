@@ -339,6 +339,7 @@ OSC::register_callbacks()
 
 #define REGISTER_CALLBACK(serv,path,types, function) lo_server_add_method (serv, path, types, OSC::_ ## function, this)
 
+		REGISTER_CALLBACK (serv, "/set_surface", "iiii", set_surface);
 		REGISTER_CALLBACK (serv, "/strip/list", "", routes_list);
 		REGISTER_CALLBACK (serv, "/add_marker", "", add_marker);
 		REGISTER_CALLBACK (serv, "/access_action", "s", access_action);
@@ -477,10 +478,8 @@ OSC::register_callbacks()
 		REGISTER_CALLBACK (serv, "/strip/mute", "ii", route_mute);
 		REGISTER_CALLBACK (serv, "/strip/solo", "ii", route_solo);
 		REGISTER_CALLBACK (serv, "/strip/recenable", "ii", route_recenable);
-		REGISTER_CALLBACK (serv, "/strip/gainabs", "if", route_set_gain_abs);
-		REGISTER_CALLBACK (serv, "/strip/gaindB", "if", route_set_gain_dB);
+		REGISTER_CALLBACK (serv, "/strip/gain", "if", route_set_gain_dB);
 		REGISTER_CALLBACK (serv, "/strip/fader", "if", route_set_gain_fader);
-		REGISTER_CALLBACK (serv, "/strip/fader1024", "if", route_set_gain_fader1024);
 		REGISTER_CALLBACK (serv, "/strip/trimabs", "if", route_set_trim_abs);
 		REGISTER_CALLBACK (serv, "/strip/trimdB", "if", route_set_trim_dB);
 		REGISTER_CALLBACK (serv, "/strip/pan_stereo_position", "if", route_set_pan_stereo_position);
@@ -766,27 +765,6 @@ OSC::catchall (const char *path, const char* types, lo_arg **argv, int argc, lo_
 		}
 
 		ret = 0;
-	} else if (strcmp (path, "/set_surface") == 0) {
-		// this could now be moved to it's own function
-		if (argc == 4) {
-			OSCSurface *s = get_surface(lo_message_get_source (msg));
-			s->bank_size = argv[0]->i;
-			s->strip_types = argv[1]->i;
-			s->feedback = argv[2]->i;
-			char* gmode = &argv[3]->s;
-
-			if (!strcmp(gmode, "ABS")) {
-				s->gainmode = ABS;
-			}else if (!strcmp(gmode, "DB")) {
-				s->gainmode = DB;
-			}else if (!strcmp(gmode, "FADER")) {
-				s->gainmode = FADER;
-			}else if (!strcmp(gmode, "INT1024")) {
-				s->gainmode = INT1024;
-			}
-			set_bank(s->bank, msg);
-		}
-		ret = 0;
 	} else if (argc == 1 && types[0] == 'f') { // single float -- probably TouchOSC
 		if (!strncmp (path, "/strip/gainabs/", 15) && strlen (path) > 15) {
 			int rid = atoi (&path[15]);
@@ -1024,6 +1002,18 @@ OSC::routes_list (lo_message msg)
 	lo_message_free (reply);
 }
 
+int
+OSC::set_surface (uint32_t b_size, uint32_t strips, uint32_t fb, uint32_t gm, lo_message msg)
+{
+	OSCSurface *s = get_surface(lo_message_get_source (msg));
+	s->bank_size = b_size;
+	s->strip_types = strips;
+	s->feedback = fb;
+	s->gainmode = gm;
+	set_bank(s->bank, msg);
+	return 0;
+}
+
 OSC::OSCSurface *
 OSC::get_surface (lo_address addr)
 {
@@ -1045,7 +1035,7 @@ OSC::get_surface (lo_address addr)
 	s.bank_size = 0;
 	s.strip_types = 0; // change me when we have strip types
 	s.feedback = 0;
-	s.gainmode = ABS;
+	s.gainmode = 0;
 	_surface.push_back (s);
 	return &_surface[_surface.size() - 1];
 }
@@ -1228,6 +1218,7 @@ OSC::master_set_gain (float dB, lo_message msg)
 	return route_set_gain_abs (318, dB_to_coefficient (dB), msg);
 }
 
+// strip calls
 int
 OSC::route_mute (int sid, int yn, lo_message msg)
 {
@@ -1300,15 +1291,9 @@ OSC::route_set_gain_dB (int sid, float dB, lo_message msg)
 int
 OSC::route_set_gain_fader (int sid, float pos, lo_message msg)
 {
-	return route_set_gain_abs (sid, slider_position_to_gain_with_max (pos, 2.0), msg);
-}
-
-int
-OSC::route_set_gain_fader1024 (int sid, float pos, lo_message msg)
-{
 	if (!session) return -1;
 	int rid = get_rid (sid, lo_message_get_source (msg));
-	if ((pos > 799.5) & (pos < 800.5)) {
+	if ((pos > 799.5) && (pos < 800.5)) {
 		return route_set_gain_abs (rid, 1.0, msg);
 	} else {
 		return route_set_gain_abs (rid, slider_position_to_gain_with_max ((pos/1023), 2.0), msg);

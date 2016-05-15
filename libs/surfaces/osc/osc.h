@@ -94,14 +94,6 @@ class OSC : public ARDOUR::ControlProtocol, public AbstractUI<OSCUIRequest>
 		All
 	};
 
-// this is used for gain control feedback so we only need to send one kind
-	enum OSCGainMode {
-		ABS,
-		DB,
-		FADER,
-		INT1024
-	};
-
 // keep a surface's global setup by remote server url
 	struct OSCSurface {
 	public:
@@ -110,7 +102,7 @@ class OSC : public ARDOUR::ControlProtocol, public AbstractUI<OSCUIRequest>
 		int bank_size;			// size of banks for this surface
 		std::bitset<8> strip_types;		// what strip types are a part of this bank
 		std::bitset<8> feedback;			// What is fed back? strips/meters/timecode/bar_beat/global
-		OSCGainMode gainmode;	// what kind of faders do we have
+		int gainmode;	// what kind of faders do we have Gain db or position 0 to 1023?
 	};
 
 // storage for  each surface's settings
@@ -338,6 +330,7 @@ class OSC : public ARDOUR::ControlProtocol, public AbstractUI<OSCUIRequest>
                return 0;                                               \
        }
 
+	PATH_CALLBACK4(set_surface,i,i,i,i);
         PATH_CALLBACK2(locate,i,i);
         PATH_CALLBACK2(loop_location,i,i);
 	PATH_CALLBACK2_MSG(route_mute,i,i);
@@ -346,7 +339,6 @@ class OSC : public ARDOUR::ControlProtocol, public AbstractUI<OSCUIRequest>
 	PATH_CALLBACK2_MSG(route_set_gain_abs,i,f);
 	PATH_CALLBACK2_MSG(route_set_gain_dB,i,f);
 	PATH_CALLBACK2_MSG(route_set_gain_fader,i,f);
-	PATH_CALLBACK2_MSG(route_set_gain_fader1024,i,f);
 	PATH_CALLBACK2_MSG(route_set_trim_abs,i,f);
 	PATH_CALLBACK2_MSG(route_set_trim_dB,i,f);
 	PATH_CALLBACK2_MSG(route_set_pan_stereo_position,i,f);
@@ -362,7 +354,6 @@ class OSC : public ARDOUR::ControlProtocol, public AbstractUI<OSCUIRequest>
 	int route_set_gain_abs (int rid, float level, lo_message msg);
 	int route_set_gain_dB (int rid, float dB, lo_message msg);
 	int route_set_gain_fader (int rid, float pos, lo_message msg);
-	int route_set_gain_fader1024 (int rid, float pos, lo_message msg);
 	int route_set_trim_abs (int rid, float level, lo_message msg);
 	int route_set_trim_dB (int rid, float dB, lo_message msg);
 	int route_set_pan_stereo_position (int rid, float left_right_fraction, lo_message msg);
@@ -376,6 +367,7 @@ class OSC : public ARDOUR::ControlProtocol, public AbstractUI<OSCUIRequest>
 	int set_bank (uint32_t bank_start, lo_message msg);
 	int bank_up (lo_message msg);
 	int bank_down (lo_message msg);
+	int set_surface (uint32_t b_size, uint32_t strips, uint32_t fb, uint32_t gmode, lo_message msg);
 
 	int master_set_gain (float dB, lo_message msg);
 	//int master_set_fader (uint32_t position, lo_message msg);

@@ -64,8 +64,8 @@ OSCRouteObserver::OSCRouteObserver (boost::shared_ptr<Route> r, lo_address a, ui
 	send_change_message ("/strip/solo", _route->solo_control());
 
 	boost::shared_ptr<Controllable> gain_controllable = boost::dynamic_pointer_cast<Controllable>(_route->gain_control());
-	gain_controllable->Changed.connect (gain_changed_connection, MISSING_INVALIDATOR, bind (&OSCRouteObserver::send_change_message, this, X_("/strip/gainabs"), _route->gain_control()), OSC::instance());
-	send_change_message ("/strip/gainabs", _route->gain_control());
+	gain_controllable->Changed.connect (gain_changed_connection, MISSING_INVALIDATOR, bind (&OSCRouteObserver::send_change_message, this, X_("/strip/gain"), _route->gain_control()), OSC::instance());
+	send_change_message ("/strip/gain", _route->gain_control());
 }
 
 OSCRouteObserver::~OSCRouteObserver ()
@@ -107,33 +107,19 @@ OSCRouteObserver::send_change_message (string path, boost::shared_ptr<Controllab
 	lo_message_add_int32 (msg, sid);
 
 	if (path.find("gain") != std::string::npos) {
-
-		switch (gainmode) {
-			case OSC::OSCGainMode::DB:
-				path = "/strip/gaindB";
-				if (controllable->get_value() < 1e-15) {
-					lo_message_add_float (msg, -200);
-				} else {
-					lo_message_add_float (msg, accurate_coefficient_to_dB (controllable->get_value()));
-				}
-				break;
-			case OSC::OSCGainMode::FADER:
-				path = "/strip/fader";
-				lo_message_add_float (msg, gain_to_slider_position (controllable->get_value()));
-				break;
-			case OSC::OSCGainMode::INT1024:
-				path = "/strip/fader1024";
-				if (controllable->get_value() == 1) {
-					lo_message_add_int32 (msg, 800);
-				} else {
-					lo_message_add_int32 (msg, gain_to_slider_position (controllable->get_value()) * 1023);
-				}
-				break;
-
-//			case OSC::OSCGainMode::ABS:
-				default:
-				lo_message_add_float (msg, controllable->get_value());
-				path = "/strip/gainabs";
+		if (gainmode) {
+			path = "/strip/fader";
+			if (controllable->get_value() == 1) {
+				lo_message_add_int32 (msg, 800);
+			} else {
+				lo_message_add_int32 (msg, gain_to_slider_position (controllable->get_value()) * 1023);
+			}
+		} else {
+			if (controllable->get_value() < 1e-15) {
+				lo_message_add_float (msg, -200);
+			} else {
+				lo_message_add_float (msg, accurate_coefficient_to_dB (controllable->get_value()));
+			}
 		}
 	} else {
 		lo_message_add_float (msg, (float) controllable->get_value());
