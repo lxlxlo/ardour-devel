@@ -407,6 +407,9 @@ OSC::register_callbacks()
 		REGISTER_CALLBACK (serv, "/bank_up", "", bank_up);
 		REGISTER_CALLBACK (serv, "/bank_down", "", bank_down);
 		REGISTER_CALLBACK (serv, "/master/gain", "f", master_set_gain);
+		REGISTER_CALLBACK (serv, "/master/fader", "i", master_set_fader);
+		REGISTER_CALLBACK (serv, "/monitor/gain", "f", monitor_set_gain);
+		REGISTER_CALLBACK (serv, "/monitor/fader", "i", monitor_set_fader);
 
 
 		/*
@@ -1216,6 +1219,38 @@ OSC::master_set_gain (float dB, lo_message msg)
 		return route_set_gain_abs (318, 0.0, msg);
 	}
 	return route_set_gain_abs (318, dB_to_coefficient (dB), msg);
+}
+
+int
+OSC::master_set_fader (uint32_t position, lo_message msg)
+{
+	if (!session) return -1;
+	if ((position > 799.5) && (position < 800.5)) {
+		return route_set_gain_abs (318, 1.0, msg);
+	} else {
+		return route_set_gain_abs (318, slider_position_to_gain_with_max (((float)position/1023), 2.0), msg);
+	}
+}
+
+int
+OSC::monitor_set_gain (float dB, lo_message msg)
+{
+	if (!session) return -1;
+	if (dB < -192) {
+		return route_set_gain_abs (319, 0.0, msg);
+	}
+	return route_set_gain_abs (319, dB_to_coefficient (dB), msg);
+}
+
+int
+OSC::monitor_set_fader (uint32_t position, lo_message msg)
+{
+	if (!session) return -1;
+	if ((position > 799.5) && (position < 800.5)) {
+		return route_set_gain_abs (319, 1.0, msg);
+	} else {
+		return route_set_gain_abs (319, slider_position_to_gain_with_max (((float)position/1023), 2.0), msg);
+	}
 }
 
 // strip calls

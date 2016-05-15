@@ -280,7 +280,9 @@ class OSC : public ARDOUR::ControlProtocol, public AbstractUI<OSCUIRequest>
 	}
 
 	PATH_CALLBACK1_MSG(master_set_gain,f);
-	//PATH_CALLBACK1_MSG(master_set_fader,i,);
+	PATH_CALLBACK1_MSG(master_set_fader,i);
+	PATH_CALLBACK1_MSG(monitor_set_gain,f);
+	PATH_CALLBACK1_MSG(monitor_set_fader,i);
 
 #define PATH_CALLBACK2(name,arg1type,arg2type)			\
         static int _ ## name (const char *path, const char *types, lo_arg **argv, int argc, void *data, void *user_data) { \
@@ -370,7 +372,9 @@ class OSC : public ARDOUR::ControlProtocol, public AbstractUI<OSCUIRequest>
 	int set_surface (uint32_t b_size, uint32_t strips, uint32_t fb, uint32_t gmode, lo_message msg);
 
 	int master_set_gain (float dB, lo_message msg);
-	//int master_set_fader (uint32_t position, lo_message msg);
+	int master_set_fader (uint32_t position, lo_message msg);
+	int monitor_set_gain (float dB, lo_message msg);
+	int monitor_set_fader (uint32_t position, lo_message msg);
 
 	void listen_to_route (boost::shared_ptr<ARDOUR::Route>, lo_address);
 	void end_listen (boost::shared_ptr<ARDOUR::Route>, lo_address);
