@@ -34,10 +34,11 @@ using namespace PBD;
 using namespace ARDOUR;
 using namespace ArdourSurface;
 
-OSCRouteObserver::OSCRouteObserver (boost::shared_ptr<Route> r, lo_address a, uint32_t s, uint32_t gm)
+OSCRouteObserver::OSCRouteObserver (boost::shared_ptr<Route> r, lo_address a, uint32_t s, uint32_t gm, bool m)
 	: _route (r)
 	,sid (s)
 	,gainmode (gm)
+	,meter (m)
 {
 
 	addr = lo_address_new (lo_address_get_hostname(a) , lo_address_get_port(a));
@@ -64,8 +65,17 @@ OSCRouteObserver::OSCRouteObserver (boost::shared_ptr<Route> r, lo_address a, ui
 	send_change_message ("/strip/solo", _route->solo_control());
 
 	boost::shared_ptr<Controllable> gain_controllable = boost::dynamic_pointer_cast<Controllable>(_route->gain_control());
-	gain_controllable->Changed.connect (gain_changed_connection, MISSING_INVALIDATOR, bind (&OSCRouteObserver::send_change_message, this, X_("/strip/gain"), _route->gain_control()), OSC::instance());
-	send_change_message ("/strip/gain", _route->gain_control());
+	if (gainmode) {
+		gain_controllable->Changed.connect (gain_changed_connection, MISSING_INVALIDATOR, bind (&OSCRouteObserver::send_gain_message, this, X_("/strip/fader"), _route->gain_control()), OSC::instance());
+		send_gain_message ("/strip/fader", _route->gain_control());
+	} else {
+		gain_controllable->Changed.connect (gain_changed_connection, MISSING_INVALIDATOR, bind (&OSCRouteObserver::send_gain_message, this, X_("/strip/gain"), _route->gain_control()), OSC::instance());
+		send_gain_message ("/strip/gain", _route->gain_control());
+	}
+
+	if (meter) {
+		// a place to turn metering on for this strip
+	}
 }
 
 OSCRouteObserver::~OSCRouteObserver ()
@@ -106,23 +116,35 @@ OSCRouteObserver::send_change_message (string path, boost::shared_ptr<Controllab
 
 	lo_message_add_int32 (msg, sid);
 
-	if (path.find("gain") != std::string::npos) {
-		if (gainmode) {
-			path = "/strip/fader";
-			if (controllable->get_value() == 1) {
-				lo_message_add_int32 (msg, 800);
-			} else {
-				lo_message_add_int32 (msg, gain_to_slider_position (controllable->get_value()) * 1023);
-			}
+	lo_message_add_float (msg, (float) controllable->get_value());
+
+	/* XXX thread issues */
+
+	//std::cerr << "ORC: send " << path << " = " << controllable->get_value() << std::endl;
+
+	lo_send_message (addr, path.c_str(), msg);
+	lo_message_free (msg);
+}
+
+void
+OSCRouteObserver::send_gain_message (string path, boost::shared_ptr<Controllable> controllable)
+{
+	lo_message msg = lo_message_new ();
+
+	lo_message_add_int32 (msg, sid);
+
+	if (gainmode) {
+		if (controllable->get_value() == 1) {
+			lo_message_add_int32 (msg, 800);
 		} else {
-			if (controllable->get_value() < 1e-15) {
-				lo_message_add_float (msg, -200);
-			} else {
-				lo_message_add_float (msg, accurate_coefficient_to_dB (controllable->get_value()));
-			}
+			lo_message_add_int32 (msg, gain_to_slider_position (controllable->get_value()) * 1023);
 		}
 	} else {
-		lo_message_add_float (msg, (float) controllable->get_value());
+		if (controllable->get_value() < 1e-15) {
+			lo_message_add_float (msg, -200);
+		} else {
+			lo_message_add_float (msg, accurate_coefficient_to_dB (controllable->get_value()));
+		}
 	}
 
 	/* XXX thread issues */

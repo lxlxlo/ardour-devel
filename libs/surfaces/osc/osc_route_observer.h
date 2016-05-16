@@ -33,7 +33,7 @@ class OSCRouteObserver
 {
 
   public:
-	OSCRouteObserver (boost::shared_ptr<ARDOUR::Route>, lo_address addr, uint32_t sid, uint32_t gainmode);
+	OSCRouteObserver (boost::shared_ptr<ARDOUR::Route>, lo_address addr, uint32_t sid, uint32_t gainmode, bool metering);
 	~OSCRouteObserver ();
 
 	boost::shared_ptr<ARDOUR::Route> route () const { return _route; }
@@ -53,9 +53,11 @@ class OSCRouteObserver
 	std::string path;
 	uint32_t sid;
 	uint32_t gainmode;
+	bool meter;
 
 	void name_changed (const PBD::PropertyChange& what_changed);
 	void send_change_message (std::string path, boost::shared_ptr<PBD::Controllable> controllable);
+	void send_gain_message (std::string path, boost::shared_ptr<PBD::Controllable> controllable);
 };
 
 #endif /* __osc_oscrouteobserver_h__ */

@@ -147,6 +147,7 @@ class OSC : public ARDOUR::ControlProtocol, public AbstractUI<OSCUIRequest>
 	OSCSurface * get_surface (lo_address addr);
 	uint32_t get_sid (uint32_t rid, lo_address addr);
 	uint32_t get_rid (uint32_t sid, lo_address addr);
+	void global_feedback (bool yn, lo_address msg);
 
 	void send_current_value (const char* path, lo_arg** argv, int argc, lo_message msg);
 	void current_value_query (const char* path, size_t len, lo_arg **argv, int argc, lo_message msg);

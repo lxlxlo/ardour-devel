@@ -574,7 +574,7 @@ OSC::listen_to_route (boost::shared_ptr<Route> route, lo_address addr)
 
 	OSCSurface *s = get_surface(addr);
 	uint32_t sid = get_sid (route->remote_control_id(), addr);
-	OSCRouteObserver* o = new OSCRouteObserver (route, addr, sid, s->gainmode);
+	OSCRouteObserver* o = new OSCRouteObserver (route, addr, sid, s->gainmode, s->feedback[1]);
 	route_observers.push_back (o);
 
 	route->DropReferences.connect (*this, MISSING_INVALIDATOR, boost::bind (&OSC::drop_route, this, boost::weak_ptr<Route> (route)), this);
@@ -1013,7 +1013,21 @@ OSC::set_surface (uint32_t b_size, uint32_t strips, uint32_t fb, uint32_t gm, lo
 	s->strip_types = strips;
 	s->feedback = fb;
 	s->gainmode = gm;
+	// set bank and strip feedback
 	set_bank(s->bank, msg);
+
+	// Set global/master feedback
+	if (s->feedback[2]) {
+		// place holder for starting timecode messages
+	} else {
+		// turn it off
+	}
+	if (s->feedback[3]) {
+		// place holder for starting bar/beat messages
+	} else {
+		// turn it off
+	}
+	global_feedback (s->feedback[4], msg);
 	return 0;
 }
 
@@ -1041,6 +1055,17 @@ OSC::get_surface (lo_address addr)
 	s.gainmode = 0;
 	_surface.push_back (s);
 	return &_surface[_surface.size() - 1];
+}
+
+// setup global feedback for a surface
+void
+OSC::global_feedback (bool yn, lo_address msg)
+{
+	// first destroy global observer for this surface
+	
+	if (yn) {
+		// create a new Global Observer for this route
+	}
 }
 
 /*
