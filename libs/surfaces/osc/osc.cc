@@ -48,6 +48,7 @@
 #include "osc.h"
 #include "osc_controllable.h"
 #include "osc_route_observer.h"
+#include "osc_global_observer.h"
 #include "i18n.h"
 
 using namespace ARDOUR;
@@ -1027,7 +1028,7 @@ OSC::set_surface (uint32_t b_size, uint32_t strips, uint32_t fb, uint32_t gm, lo
 	} else {
 		// turn it off
 	}
-	global_feedback (s->feedback[4], msg);
+	global_feedback (s->feedback[4], msg, s->gainmode);
 	return 0;
 }
 
@@ -1059,12 +1060,34 @@ OSC::get_surface (lo_address addr)
 
 // setup global feedback for a surface
 void
-OSC::global_feedback (bool yn, lo_address msg)
+OSC::global_feedback (bool yn, lo_address msg, uint32_t gainmode)
 {
 	// first destroy global observer for this surface
-	
+	GlobalObservers::iterator x;
+
+	for (x = global_observers.begin(); x != global_observers.end();) {
+
+		OSCGlobalObserver* ro;
+
+		if ((ro = dynamic_cast<OSCGlobalObserver*>(*x)) != 0) {
+
+			int res = strcmp(lo_address_get_url(ro->address()), lo_address_get_url(lo_message_get_source (msg)));
+
+			if (res == 0) {
+				delete *x;
+				x = global_observers.erase (x);
+			} else {
+				++x;
+			}
+		} else {
+			++x;
+		}
+	}
+
 	if (yn) {
 		// create a new Global Observer for this route
+	OSCGlobalObserver* o = new OSCGlobalObserver (*session, lo_message_get_source (msg), gainmode);
+	global_observers.push_back (o);
 	}
 }
 

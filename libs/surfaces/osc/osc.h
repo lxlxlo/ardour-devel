@@ -43,6 +43,7 @@
 
 class OSCControllable;
 class OSCRouteObserver;
+class OSCGlobalObserver;
 
 namespace ARDOUR {
 class Session;
@@ -147,7 +148,7 @@ class OSC : public ARDOUR::ControlProtocol, public AbstractUI<OSCUIRequest>
 	OSCSurface * get_surface (lo_address addr);
 	uint32_t get_sid (uint32_t rid, lo_address addr);
 	uint32_t get_rid (uint32_t sid, lo_address addr);
-	void global_feedback (bool yn, lo_address msg);
+	void global_feedback (bool yn, lo_address msg, uint32_t gainmode);
 
 	void send_current_value (const char* path, lo_arg** argv, int argc, lo_message msg);
 	void current_value_query (const char* path, size_t len, lo_arg **argv, int argc, lo_message msg);
@@ -388,6 +389,10 @@ class OSC : public ARDOUR::ControlProtocol, public AbstractUI<OSCUIRequest>
 	typedef std::list<OSCRouteObserver*> RouteObservers;
 
 	RouteObservers route_observers;
+
+	typedef std::list<OSCGlobalObserver*> GlobalObservers;
+	GlobalObservers global_observers;
+
 	void debugmsg (const char *prefix, const char *path, const char* types, lo_arg **argv, int argc);
 
 	static OSC* _instance;
