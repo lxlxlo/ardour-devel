@@ -414,6 +414,7 @@ OSC::register_callbacks()
 		REGISTER_CALLBACK (serv, "/bank_down", "", bank_down);
 		REGISTER_CALLBACK (serv, "/master/gain", "f", master_set_gain);
 		REGISTER_CALLBACK (serv, "/master/fader", "i", master_set_fader);
+		REGISTER_CALLBACK (serv, "/master/mute", "i", master_set_mute);
 		REGISTER_CALLBACK (serv, "/monitor/gain", "f", monitor_set_gain);
 		REGISTER_CALLBACK (serv, "/monitor/fader", "i", monitor_set_fader);
 
@@ -1284,6 +1285,21 @@ OSC::master_set_fader (uint32_t position, lo_message msg)
 		return route_set_gain_abs (318, slider_position_to_gain_with_max (((float)position/1023), 2.0), msg);
 	}
 }
+
+int
+OSC::master_set_mute (uint32_t state, lo_message msg)
+{
+	if (!session) return -1;
+
+	boost::shared_ptr<Route> r = session->route_by_remote_id (318);
+
+	if (r) {
+		r->set_mute (state, PBD::Controllable::NoGroup);
+	}
+
+	return 0;
+}
+
 
 int
 OSC::monitor_set_gain (float dB, lo_message msg)

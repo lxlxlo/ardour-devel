@@ -283,6 +283,7 @@ class OSC : public ARDOUR::ControlProtocol, public AbstractUI<OSCUIRequest>
 
 	PATH_CALLBACK1_MSG(master_set_gain,f);
 	PATH_CALLBACK1_MSG(master_set_fader,i);
+	PATH_CALLBACK1_MSG(master_set_mute,i);
 	PATH_CALLBACK1_MSG(monitor_set_gain,f);
 	PATH_CALLBACK1_MSG(monitor_set_fader,i);
 
@@ -375,6 +376,7 @@ class OSC : public ARDOUR::ControlProtocol, public AbstractUI<OSCUIRequest>
 
 	int master_set_gain (float dB, lo_message msg);
 	int master_set_fader (uint32_t position, lo_message msg);
+	int master_set_mute (uint32_t state, lo_message msg);
 	int monitor_set_gain (float dB, lo_message msg);
 	int monitor_set_fader (uint32_t position, lo_message msg);
 
