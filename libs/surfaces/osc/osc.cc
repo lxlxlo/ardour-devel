@@ -349,9 +349,13 @@ OSC::register_callbacks()
 		REGISTER_CALLBACK (serv, "/goto_start", "", goto_start);
 		REGISTER_CALLBACK (serv, "/goto_end", "", goto_end);
 		REGISTER_CALLBACK (serv, "/rewind", "", rewind);
+		REGISTER_CALLBACK (serv, "/rewind", "f", rewind);
 		REGISTER_CALLBACK (serv, "/ffwd", "", ffwd);
+		REGISTER_CALLBACK (serv, "/ffwd", "f", ffwd);
 		REGISTER_CALLBACK (serv, "/transport_stop", "", transport_stop);
+		REGISTER_CALLBACK (serv, "/transport_stop", "f", transport_stop);
 		REGISTER_CALLBACK (serv, "/transport_play", "", transport_play);
+		REGISTER_CALLBACK (serv, "/transport_play", "f", transport_play);
 		REGISTER_CALLBACK (serv, "/transport_frame", "", transport_frame);
 		REGISTER_CALLBACK (serv, "/transport_speed", "", transport_speed);
 		REGISTER_CALLBACK (serv, "/record_enabled", "", record_enabled);
@@ -365,6 +369,7 @@ OSC::register_callbacks()
 		REGISTER_CALLBACK (serv, "/toggle_punch_in", "", toggle_punch_in);
 		REGISTER_CALLBACK (serv, "/toggle_punch_out", "", toggle_punch_out);
 		REGISTER_CALLBACK (serv, "/rec_enable_toggle", "", rec_enable_toggle);
+		REGISTER_CALLBACK (serv, "/rec_enable_toggle", "f", rec_enable_toggle);
 		REGISTER_CALLBACK (serv, "/toggle_all_rec_enables", "", toggle_all_rec_enables);
 		REGISTER_CALLBACK (serv, "/all_tracks_rec_in", "f", all_tracks_rec_in);
 		REGISTER_CALLBACK (serv, "/all_tracks_rec_out", "f", all_tracks_rec_out);
