@@ -415,6 +415,8 @@ OSC::register_callbacks()
 		REGISTER_CALLBACK (serv, "/master/gain", "f", master_set_gain);
 		REGISTER_CALLBACK (serv, "/master/fader", "i", master_set_fader);
 		REGISTER_CALLBACK (serv, "/master/mute", "i", master_set_mute);
+		REGISTER_CALLBACK (serv, "/master/trimdB", "f", master_set_trim);
+		REGISTER_CALLBACK (serv, "/master/pan_stereo_position", "f", master_set_pan_stereo_position);
 		REGISTER_CALLBACK (serv, "/monitor/gain", "f", monitor_set_gain);
 		REGISTER_CALLBACK (serv, "/monitor/fader", "i", monitor_set_fader);
 
@@ -1284,6 +1286,37 @@ OSC::master_set_fader (uint32_t position, lo_message msg)
 	} else {
 		return route_set_gain_abs (318, slider_position_to_gain_with_max (((float)position/1023), 2.0), msg);
 	}
+}
+
+int
+OSC::master_set_trim (float dB, lo_message msg)
+{
+	if (!session) return -1;
+
+	boost::shared_ptr<Route> r = session->route_by_remote_id (318);
+
+	if (r) {
+		r->set_trim (dB_to_coefficient (dB), PBD::Controllable::NoGroup);
+	}
+
+	return 0;
+}
+
+int
+OSC::master_set_pan_stereo_position (float position, lo_message msg)
+{
+	if (!session) return -1;
+
+	boost::shared_ptr<Route> r = session->route_by_remote_id (318);
+
+	if (r) {
+		boost::shared_ptr<Panner> panner = r->panner();
+		if (panner) {
+			panner->set_position (position);
+		}
+	}
+
+	return 0;
 }
 
 int

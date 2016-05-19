@@ -48,6 +48,8 @@ class OSCRouteObserver
 	PBD::ScopedConnection mute_changed_connection;
 	PBD::ScopedConnection solo_changed_connection;
 	PBD::ScopedConnection gain_changed_connection;
+	PBD::ScopedConnection trim_changed_connection;
+	PBD::ScopedConnection pan_changed_connection;
 
 	lo_address addr;
 	std::string path;
@@ -58,6 +60,7 @@ class OSCRouteObserver
 	void name_changed (const PBD::PropertyChange& what_changed);
 	void send_change_message (std::string path, boost::shared_ptr<PBD::Controllable> controllable);
 	void send_gain_message (std::string path, boost::shared_ptr<PBD::Controllable> controllable);
+	void send_trim_message (std::string path, boost::shared_ptr<PBD::Controllable> controllable);
 };
 
 #endif /* __osc_oscrouteobserver_h__ */

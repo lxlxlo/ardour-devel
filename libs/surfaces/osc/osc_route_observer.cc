@@ -64,6 +64,14 @@ OSCRouteObserver::OSCRouteObserver (boost::shared_ptr<Route> r, lo_address a, ui
 	_route->listen_changed.connect (solo_changed_connection, MISSING_INVALIDATOR, bind (&OSCRouteObserver::send_change_message, this, X_("/strip/solo"), _route->solo_control()), OSC::instance());
 	send_change_message ("/strip/solo", _route->solo_control());
 
+	boost::shared_ptr<Controllable> trim_controllable = boost::dynamic_pointer_cast<Controllable>(_route->trim_control());
+		trim_controllable->Changed.connect (trim_changed_connection, MISSING_INVALIDATOR, bind (&OSCRouteObserver::send_trim_message, this, X_("/strip/trimdB"), _route->trim_control()), OSC::instance());
+		send_trim_message ("/strip/trimdB", _route->trim_control());
+
+	boost::shared_ptr<Controllable> pan_controllable = boost::dynamic_pointer_cast<Controllable>(_route->pan_azimuth_control());
+		pan_controllable->Changed.connect (pan_changed_connection, MISSING_INVALIDATOR, bind (&OSCRouteObserver::send_change_message, this, X_("/strip/pan_stereo_position"), _route->pan_azimuth_control()), OSC::instance());
+		send_change_message ("/strip/pan_stereo_position", _route->pan_azimuth_control());
+
 	boost::shared_ptr<Controllable> gain_controllable = boost::dynamic_pointer_cast<Controllable>(_route->gain_control());
 	if (gainmode) {
 		gain_controllable->Changed.connect (gain_changed_connection, MISSING_INVALIDATOR, bind (&OSCRouteObserver::send_gain_message, this, X_("/strip/fader"), _route->gain_control()), OSC::instance());
@@ -127,6 +135,19 @@ OSCRouteObserver::send_change_message (string path, boost::shared_ptr<Controllab
 }
 
 void
+OSCRouteObserver::send_trim_message (string path, boost::shared_ptr<Controllable> controllable)
+{
+	lo_message msg = lo_message_new ();
+
+	lo_message_add_int32 (msg, sid);
+
+	lo_message_add_float (msg, (float) accurate_coefficient_to_dB (controllable->get_value()));
+
+	lo_send_message (addr, path.c_str(), msg);
+	lo_message_free (msg);
+}
+
+void
 OSCRouteObserver::send_gain_message (string path, boost::shared_ptr<Controllable> controllable)
 {
 	lo_message msg = lo_message_new ();
@@ -146,10 +167,6 @@ OSCRouteObserver::send_gain_message (string path, boost::shared_ptr<Controllable
 			lo_message_add_float (msg, accurate_coefficient_to_dB (controllable->get_value()));
 		}
 	}
-
-	/* XXX thread issues */
-
-	//std::cerr << "ORC: send " << path << " = " << controllable->get_value() << std::endl;
 
 	lo_send_message (addr, path.c_str(), msg);
 	lo_message_free (msg);

@@ -45,6 +45,8 @@ class OSCGlobalObserver
 
 	PBD::ScopedConnection mute_changed_connection;
 	PBD::ScopedConnection gain_changed_connection;
+	PBD::ScopedConnection trim_changed_connection;
+	PBD::ScopedConnection pan_changed_connection;
 	PBD::ScopedConnection monitor_gain_connection;
 	PBD::ScopedConnection monitor_mute_connection;
 	PBD::ScopedConnectionList session_connections;
@@ -57,6 +59,7 @@ class OSCGlobalObserver
 
 	void send_change_message (std::string path, boost::shared_ptr<PBD::Controllable> controllable);
 	void send_gain_message (std::string path, boost::shared_ptr<PBD::Controllable> controllable);
+	void send_trim_message (std::string path, boost::shared_ptr<PBD::Controllable> controllable);
 	void send_transport_state_changed(void);
 	void send_record_state_changed (void);
 };

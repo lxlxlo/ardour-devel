@@ -59,6 +59,14 @@ OSCGlobalObserver::OSCGlobalObserver (Session& s, lo_address a, uint32_t gm)
 	mute_controllable->Changed.connect (mute_changed_connection, MISSING_INVALIDATOR, bind (&OSCGlobalObserver::send_change_message, this, X_("/master/mute"), r->mute_control()), OSC::instance());
 	send_change_message ("/master/mute", r->mute_control());
 
+	boost::shared_ptr<Controllable> trim_controllable = boost::dynamic_pointer_cast<Controllable>(r->trim_control());
+		trim_controllable->Changed.connect (trim_changed_connection, MISSING_INVALIDATOR, bind (&OSCGlobalObserver::send_trim_message, this, X_("/master/trimdB"), r->trim_control()), OSC::instance());
+		send_trim_message ("/master/trimdB", r->trim_control());
+
+	boost::shared_ptr<Controllable> pan_controllable = boost::dynamic_pointer_cast<Controllable>(r->pan_azimuth_control());
+		pan_controllable->Changed.connect (pan_changed_connection, MISSING_INVALIDATOR, bind (&OSCGlobalObserver::send_change_message, this, X_("/master/pan_stereo_position"), r->pan_azimuth_control()), OSC::instance());
+		send_change_message ("/master/pan_stereo_position", r->pan_azimuth_control());
+
 	boost::shared_ptr<Controllable> gain_controllable = boost::dynamic_pointer_cast<Controllable>(r->gain_control());
 	if (gainmode) {
 		gain_controllable->Changed.connect (gain_changed_connection, MISSING_INVALIDATOR, bind (&OSCGlobalObserver::send_gain_message, this, X_("/master/fader"), r->gain_control()), OSC::instance());
@@ -161,6 +169,18 @@ OSCGlobalObserver::send_gain_message (string path, boost::shared_ptr<Controllabl
 	lo_send_message (addr, path.c_str(), msg);
 	lo_message_free (msg);
 }
+
+void
+OSCGlobalObserver::send_trim_message (string path, boost::shared_ptr<Controllable> controllable)
+{
+	lo_message msg = lo_message_new ();
+
+	lo_message_add_float (msg, (float) accurate_coefficient_to_dB (controllable->get_value()));
+
+	lo_send_message (addr, path.c_str(), msg);
+	lo_message_free (msg);
+}
+
 
 void
 OSCGlobalObserver::send_transport_state_changed()
