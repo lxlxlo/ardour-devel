@@ -555,6 +555,7 @@ public:
 			pframes_t nframes, int declick);
 
         bool slaved_to (boost::shared_ptr<VCA>) const;
+        bool slaved () const;
 
   protected:
         friend class Session;
