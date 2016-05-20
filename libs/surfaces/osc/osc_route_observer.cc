@@ -61,7 +61,7 @@ OSCRouteObserver::OSCRouteObserver (boost::shared_ptr<Route> r, lo_address a, ui
 
 	boost::shared_ptr<Controllable> solo_controllable = boost::dynamic_pointer_cast<Controllable>(_route->solo_control());
 	solo_controllable->Changed.connect (solo_changed_connection, MISSING_INVALIDATOR, bind (&OSCRouteObserver::send_change_message, this, X_("/strip/solo"), _route->solo_control()), OSC::instance());
-	_route->listen_changed.connect (solo_changed_connection, MISSING_INVALIDATOR, bind (&OSCRouteObserver::send_change_message, this, X_("/strip/solo"), _route->solo_control()), OSC::instance());
+	_route->listen_changed.connect (listen_changed_connection, MISSING_INVALIDATOR, bind (&OSCRouteObserver::send_change_message, this, X_("/strip/solo"), _route->solo_control()), OSC::instance());
 	send_change_message ("/strip/solo", _route->solo_control());
 
 	boost::shared_ptr<Controllable> trim_controllable = boost::dynamic_pointer_cast<Controllable>(_route->trim_control());
@@ -92,7 +92,10 @@ OSCRouteObserver::~OSCRouteObserver ()
 	rec_changed_connection.disconnect();
 	mute_changed_connection.disconnect();
 	solo_changed_connection.disconnect();
+	listen_changed_connection.disconnect();
 	gain_changed_connection.disconnect();
+	trim_changed_connection.disconnect();
+	pan_changed_connection.disconnect();
 
 	lo_address_free (addr);
 }

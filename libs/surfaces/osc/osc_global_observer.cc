@@ -121,6 +121,8 @@ OSCGlobalObserver::~OSCGlobalObserver ()
 {
 	mute_changed_connection.disconnect();
 	gain_changed_connection.disconnect();
+	trim_changed_connection.disconnect();
+	pan_changed_connection.disconnect();
 	monitor_gain_connection.disconnect();
 	monitor_mute_connection.disconnect();
 	session_connections.drop_connections ();

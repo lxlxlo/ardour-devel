@@ -47,6 +47,7 @@ class OSCRouteObserver
 	PBD::ScopedConnection rec_changed_connection;
 	PBD::ScopedConnection mute_changed_connection;
 	PBD::ScopedConnection solo_changed_connection;
+	PBD::ScopedConnection listen_changed_connection;
 	PBD::ScopedConnection gain_changed_connection;
 	PBD::ScopedConnection trim_changed_connection;
 	PBD::ScopedConnection pan_changed_connection;
