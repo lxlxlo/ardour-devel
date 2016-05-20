@@ -53,7 +53,7 @@ OSCGlobalObserver::OSCGlobalObserver (Session& s, lo_address a, uint32_t gm)
 	// Master channel first, With banking and changes to RID numbering.
 	// access by rid = 318 will vanish so this needs to be here.
 	// (though it will change to the new way of finding master/monitor)
-	boost::shared_ptr<Route> r = session->route_by_remote_id (318);
+	boost::shared_ptr<Route> r = session->master_out();
 
 	boost::shared_ptr<Controllable> mute_controllable = boost::dynamic_pointer_cast<Controllable>(r->mute_control());
 	mute_controllable->Changed.connect (mute_changed_connection, MISSING_INVALIDATOR, bind (&OSCGlobalObserver::send_change_message, this, X_("/master/mute"), r->mute_control()), OSC::instance());
@@ -85,7 +85,7 @@ OSCGlobalObserver::OSCGlobalObserver (Session& s, lo_address a, uint32_t gm)
 	 * 		Rude Solo
 	 * 		etc.
 	 */
-	r = session->route_by_remote_id (319);
+	r = session->monitor_out();
 
 	// Hmm, it seems the monitor mute is not at route->mute_control()
 	/*boost::shared_ptr<Controllable> mute_controllable2 = boost::dynamic_pointer_cast<Controllable>(r->mute_control());

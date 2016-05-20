@@ -1266,34 +1266,43 @@ OSC::record_enabled (lo_message msg)
 	lo_message_free (reply);
 }
 
-// master monitor calls
+// master and monitor calls
 int
-OSC::master_set_gain (float dB, lo_message msg)
+OSC::master_set_gain (float dB)
 {
 	if (!session) return -1;
-	if (dB < -192) {
-		return route_set_gain_abs (318, 0.0, msg);
+	boost::shared_ptr<Route> r = session->master_out();
+
+	if (r) {
+		if (dB < -192) {
+			r->set_gain (0.0, PBD::Controllable::NoGroup);
+		} else {
+			r->set_gain (dB_to_coefficient (dB), PBD::Controllable::NoGroup);
+		}
 	}
-	return route_set_gain_abs (318, dB_to_coefficient (dB), msg);
+	return 0;
 }
 
 int
-OSC::master_set_fader (uint32_t position, lo_message msg)
+OSC::master_set_fader (uint32_t position)
 {
 	if (!session) return -1;
-	if ((position > 799.5) && (position < 800.5)) {
-		return route_set_gain_abs (318, 1.0, msg);
-	} else {
-		return route_set_gain_abs (318, slider_position_to_gain_with_max (((float)position/1023), 2.0), msg);
+	boost::shared_ptr<Route> r = session->master_out();
+	if (r) {
+		if ((position > 799.5) && (position < 800.5)) {
+			r->set_gain (1.0, PBD::Controllable::NoGroup);
+		} else {
+			r->set_gain (slider_position_to_gain_with_max (((float)position/1023), 2.0), PBD::Controllable::NoGroup);
+		}
 	}
+	return 0;
 }
 
 int
-OSC::master_set_trim (float dB, lo_message msg)
+OSC::master_set_trim (float dB)
 {
 	if (!session) return -1;
-
-	boost::shared_ptr<Route> r = session->route_by_remote_id (318);
+	boost::shared_ptr<Route> r = session->master_out();
 
 	if (r) {
 		r->set_trim (dB_to_coefficient (dB), PBD::Controllable::NoGroup);
@@ -1303,11 +1312,11 @@ OSC::master_set_trim (float dB, lo_message msg)
 }
 
 int
-OSC::master_set_pan_stereo_position (float position, lo_message msg)
+OSC::master_set_pan_stereo_position (float position)
 {
 	if (!session) return -1;
 
-	boost::shared_ptr<Route> r = session->route_by_remote_id (318);
+	boost::shared_ptr<Route> r = session->master_out();
 
 	if (r) {
 		boost::shared_ptr<Panner> panner = r->panner();
@@ -1320,11 +1329,11 @@ OSC::master_set_pan_stereo_position (float position, lo_message msg)
 }
 
 int
-OSC::master_set_mute (uint32_t state, lo_message msg)
+OSC::master_set_mute (uint32_t state)
 {
 	if (!session) return -1;
 
-	boost::shared_ptr<Route> r = session->route_by_remote_id (318);
+	boost::shared_ptr<Route> r = session->master_out();
 
 	if (r) {
 		r->set_mute (state, PBD::Controllable::NoGroup);
@@ -1335,24 +1344,34 @@ OSC::master_set_mute (uint32_t state, lo_message msg)
 
 
 int
-OSC::monitor_set_gain (float dB, lo_message msg)
+OSC::monitor_set_gain (float dB)
 {
 	if (!session) return -1;
-	if (dB < -192) {
-		return route_set_gain_abs (319, 0.0, msg);
+	boost::shared_ptr<Route> r = session->monitor_out();
+
+	if (r) {
+		if (dB < -192) {
+			r->set_gain (0.0, PBD::Controllable::NoGroup);
+		} else {
+			r->set_gain (dB_to_coefficient (dB), PBD::Controllable::NoGroup);
+		}
 	}
-	return route_set_gain_abs (319, dB_to_coefficient (dB), msg);
+	return 0;
 }
 
 int
-OSC::monitor_set_fader (uint32_t position, lo_message msg)
+OSC::monitor_set_fader (uint32_t position)
 {
 	if (!session) return -1;
-	if ((position > 799.5) && (position < 800.5)) {
-		return route_set_gain_abs (319, 1.0, msg);
-	} else {
-		return route_set_gain_abs (319, slider_position_to_gain_with_max (((float)position/1023), 2.0), msg);
+	boost::shared_ptr<Route> r = session->monitor_out();
+	if (r) {
+		if ((position > 799.5) && (position < 800.5)) {
+			r->set_gain (1.0, PBD::Controllable::NoGroup);
+		} else {
+			r->set_gain (slider_position_to_gain_with_max (((float)position/1023), 2.0), PBD::Controllable::NoGroup);
+		}
 	}
+	return 0;
 }
 
 // strip calls
