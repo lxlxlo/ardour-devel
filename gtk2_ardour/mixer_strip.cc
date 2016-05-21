@@ -2557,7 +2557,7 @@ MixerStrip::vca_button_release (GdkEventButton* ev)
 	VCAList vcas (_session->vca_manager().vcas());
 
 	if (vcas.empty()) {
-		/* XXX should probably show a message saying "No VCA masters" */
+		/* the button should not have been visible under these conditions */
 		return true;
 	}
 
