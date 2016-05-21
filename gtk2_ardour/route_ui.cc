@@ -1095,15 +1095,15 @@ RouteUI::send_blink (bool onoff)
 }
 
 Gtkmm2ext::ActiveState
-RouteUI::solo_active_state (boost::shared_ptr<Route> r)
+RouteUI::solo_active_state (boost::shared_ptr<Stripable> s)
 {
-	if (!r->can_solo()) {
+	if (!s->solo_control()->can_solo()) {
 		return Gtkmm2ext::Off;
 	}
 
-	if (r->self_soloed()) {
+	if (s->solo_control()->self_soloed()) {
 		return Gtkmm2ext::ExplicitActive;
-	} else if (r->soloed_by_others()) {
+	} else if (s->solo_control()->soloed_by_others()) {
 		return Gtkmm2ext::ImplicitActive;
 	} else {
 		return Gtkmm2ext::Off;
@@ -1111,7 +1111,7 @@ RouteUI::solo_active_state (boost::shared_ptr<Route> r)
 }
 
 Gtkmm2ext::ActiveState
-RouteUI::solo_isolate_active_state (boost::shared_ptr<Route> r)
+RouteUI::solo_isolate_active_state (boost::shared_ptr<Stripable> r)
 {
 	if (r->is_master() || r->is_monitor()) {
 		return Gtkmm2ext::Off;
@@ -1125,7 +1125,7 @@ RouteUI::solo_isolate_active_state (boost::shared_ptr<Route> r)
 }
 
 Gtkmm2ext::ActiveState
-RouteUI::solo_safe_active_state (boost::shared_ptr<Route> r)
+RouteUI::solo_safe_active_state (boost::shared_ptr<Stripable> r)
 {
 	if (r->is_master() || r->is_monitor()) {
 		return Gtkmm2ext::Off;
@@ -1186,7 +1186,7 @@ RouteUI::solo_changed_so_update_mute ()
 }
 
 ActiveState
-RouteUI::mute_active_state (Session* s, boost::shared_ptr<Route> r)
+RouteUI::mute_active_state (Session* s, boost::shared_ptr<Stripable> r)
 {
 	if (r->is_monitor()) {
 		return ActiveState(0);
@@ -1197,7 +1197,7 @@ RouteUI::mute_active_state (Session* s, boost::shared_ptr<Route> r)
 		if (r->mute_control()->muted_by_self ()) {
 			/* full mute */
 			return Gtkmm2ext::ExplicitActive;
-		} else if (r->muted_by_others_soloing () || r->muted_by_masters ()) {
+		} else if (r->mute_control()->muted_by_others_soloing () || r->mute_control()->muted_by_masters ()) {
 			/* this will reflect both solo mutes AND master mutes */
 			return Gtkmm2ext::ImplicitActive;
 		} else {
@@ -1210,7 +1210,7 @@ RouteUI::mute_active_state (Session* s, boost::shared_ptr<Route> r)
 		if (r->mute_control()->muted_by_self()) {
 			/* full mute */
 			return Gtkmm2ext::ExplicitActive;
-		} else if (r->muted_by_masters ()) {
+		} else if (r->mute_control()->muted_by_masters ()) {
 			/* this shows only master mutes, not mute-by-others-soloing */
 			return Gtkmm2ext::ImplicitActive;
 		} else {

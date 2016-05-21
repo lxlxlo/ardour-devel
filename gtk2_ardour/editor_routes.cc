@@ -236,7 +236,7 @@ EditorRoutes::EditorRoutes (Editor* e)
 	_display.set_name (X_("EditGroupList"));
 	_display.set_rules_hint (true);
 	_display.set_size_request (100, -1);
-	_display.add_object_drag (_columns.route.index(), "routes");
+	_display.add_object_drag (_columns.stripable.index(), "routes");
 
 	CellRendererText* name_cell = dynamic_cast<CellRendererText*> (_display.get_column_cell_renderer (_name_column));
 
@@ -510,7 +510,7 @@ EditorRoutes::redisplay_real ()
 
 	for (n = 0, position = 0, i = rows.begin(); i != rows.end(); ++i) {
 		TimeAxisView *tv = (*i)[_columns.tv];
-		boost::shared_ptr<Route> route = (*i)[_columns.route];
+		boost::shared_ptr<Stripable> route = (*i)[_columns.stripable];
 
 		if (tv == 0) {
 			// just a "title" row
@@ -641,9 +641,12 @@ EditorRoutes::active_changed (std::string const & path)
 	}
 
 	Gtk::TreeModel::Row row = *_model->get_iter (path);
-	boost::shared_ptr<Route> route = row[_columns.route];
-	bool const active = row[_columns.active];
-	route->set_active (!active, this);
+	boost::shared_ptr<Stripable> stripable = row[_columns.stripable];
+	boost::shared_ptr<Route> route = boost::dynamic_pointer_cast<Route> (stripable);
+	if (route) {
+		bool const active = row[_columns.active];
+		route->set_active (!active, this);
+	}
 }
 
 void
@@ -654,7 +657,7 @@ EditorRoutes::routes_added (list<RouteTimeAxisView*> routes)
 	Gtk::TreeModel::Children::iterator insert_iter = _model->children().end();
 
 	for (Gtk::TreeModel::Children::iterator it = _model->children().begin(); it != _model->children().end(); ++it) {
-		boost::shared_ptr<Route> r = (*it)[_columns.route];
+		boost::shared_ptr<Stripable> r = (*it)[_columns.stripable];
 
 		if (r->presentation_info().group_order() == (routes.front()->route()->presentation_info().group_order() + routes.size())) {
 			insert_iter = it;
@@ -676,7 +679,7 @@ EditorRoutes::routes_added (list<RouteTimeAxisView*> routes)
 		row[_columns.visible] = (*x)->marked_for_display();
 		row[_columns.active] = (*x)->route()->active ();
 		row[_columns.tv] = *x;
-		row[_columns.route] = (*x)->route ();
+		row[_columns.stripable] = (*x)->route ();
 		row[_columns.is_track] = (boost::dynamic_pointer_cast<Track> ((*x)->route()) != 0);
 
 		if (midi_trk) {
@@ -794,7 +797,7 @@ EditorRoutes::route_property_changed (const PropertyChange& what_changed, boost:
 	TreeModel::Children::iterator i;
 
 	for (i = rows.begin(); i != rows.end(); ++i) {
-		boost::shared_ptr<Route> t = (*i)[_columns.route];
+		boost::shared_ptr<Stripable> t = (*i)[_columns.stripable];
 		if (t == route) {
 			(*i)[_columns.text] = route->name();
 			break;
@@ -896,21 +899,21 @@ EditorRoutes::sync_presentation_info_from_treeview ()
 
 	for (ri = rows.begin(); ri != rows.end(); ++ri) {
 
-		boost::shared_ptr<Route> route = (*ri)[_columns.route];
+		boost::shared_ptr<Stripable> stripable = (*ri)[_columns.stripable];
 		bool visible = (*ri)[_columns.visible];
 
-		if (route->presentation_info().special ()) {
+		if (stripable->presentation_info().special ()) {
 			continue;
 		}
 
 		if (!visible) {
-			route->presentation_info().set_flag (PresentationInfo::Hidden);
+			stripable->presentation_info().set_flag (PresentationInfo::Hidden);
 		} else {
-			route->presentation_info().unset_flag (PresentationInfo::Hidden);
+			stripable->presentation_info().unset_flag (PresentationInfo::Hidden);
 		}
 
-		if (order != route->presentation_info().group_order()) {
-			route->set_presentation_group_order_explicit (order);
+		if (order != stripable->presentation_info().group_order()) {
+			stripable->set_presentation_group_order_explicit (order);
 			change = true;
 		}
 
@@ -953,8 +956,8 @@ EditorRoutes::sync_treeview_from_presentation_info ()
 	OrderingKeys sorted;
 
 	for (TreeModel::Children::iterator ri = rows.begin(); ri != rows.end(); ++ri, ++old_order) {
-		boost::shared_ptr<Route> route = (*ri)[_columns.route];
-		sorted.push_back (OrderKeys (old_order, route->presentation_info().group_order()));
+		boost::shared_ptr<Stripable> stripable = (*ri)[_columns.stripable];
+		sorted.push_back (OrderKeys (old_order, stripable->presentation_info().group_order()));
 	}
 
 	SortByNewDisplayOrder cmp;
@@ -1376,33 +1379,33 @@ EditorRoutes::move_selected_tracks (bool up)
 		return;
 	}
 
-	typedef std::pair<TimeAxisView*,boost::shared_ptr<Route> > ViewRoute;
-	std::list<ViewRoute> view_routes;
+	typedef std::pair<TimeAxisView*,boost::shared_ptr<Stripable> > ViewStripable;
+	std::list<ViewStripable> view_stripables;
 	std::vector<int> neworder;
 	TreeModel::Children rows = _model->children();
 	TreeModel::Children::iterator ri;
 
 	for (ri = rows.begin(); ri != rows.end(); ++ri) {
 		TimeAxisView* tv = (*ri)[_columns.tv];
-		boost::shared_ptr<Route> route = (*ri)[_columns.route];
+		boost::shared_ptr<Stripable> stripable = (*ri)[_columns.stripable];
 
-		view_routes.push_back (ViewRoute (tv, route));
+		view_stripables.push_back (ViewStripable (tv, stripable));
 	}
 
-	list<ViewRoute>::iterator trailing;
-	list<ViewRoute>::iterator leading;
+	list<ViewStripable>::iterator trailing;
+	list<ViewStripable>::iterator leading;
 
 	if (up) {
 
-		trailing = view_routes.begin();
-		leading = view_routes.begin();
+		trailing = view_stripables.begin();
+		leading = view_stripables.begin();
 
 		++leading;
 
-		while (leading != view_routes.end()) {
+		while (leading != view_stripables.end()) {
 			if (_editor->selection->selected (leading->first)) {
-				view_routes.insert (trailing, ViewRoute (leading->first, leading->second));
-				leading = view_routes.erase (leading);
+				view_stripables.insert (trailing, ViewStripable (leading->first, leading->second));
+				leading = view_stripables.erase (leading);
 			} else {
 				++leading;
 				++trailing;
@@ -1416,17 +1419,17 @@ EditorRoutes::move_selected_tracks (bool up)
 		   and so it looks like a bit of a mess.
 		*/
 
-		trailing = view_routes.end();
-		leading = view_routes.end();
+		trailing = view_stripables.end();
+		leading = view_stripables.end();
 
-		--leading; if (leading == view_routes.begin()) { return; }
+		--leading; if (leading == view_stripables.begin()) { return; }
 		--leading;
 		--trailing;
 
 		while (1) {
 
 			if (_editor->selection->selected (leading->first)) {
-				list<ViewRoute>::iterator tmp;
+				list<ViewStripable>::iterator tmp;
 
 				/* need to insert *after* trailing, not *before* it,
 				   which is what insert (iter, val) normally does.
@@ -1435,7 +1438,7 @@ EditorRoutes::move_selected_tracks (bool up)
 				tmp = trailing;
 				tmp++;
 
-				view_routes.insert (tmp, ViewRoute (leading->first, leading->second));
+				view_stripables.insert (tmp, ViewStripable (leading->first, leading->second));
 
 				/* can't use iter = cont.erase (iter); form here, because
 				   we need iter to move backwards.
@@ -1446,7 +1449,7 @@ EditorRoutes::move_selected_tracks (bool up)
 
 				bool done = false;
 
-				if (leading == view_routes.begin()) {
+				if (leading == view_stripables.begin()) {
 					/* the one we've just inserted somewhere else
 					   was the first in the list. erase this copy,
 					   and then break, because we're done.
@@ -1454,7 +1457,7 @@ EditorRoutes::move_selected_tracks (bool up)
 					done = true;
 				}
 
-				view_routes.erase (leading);
+				view_stripables.erase (leading);
 
 				if (done) {
 					break;
@@ -1463,7 +1466,7 @@ EditorRoutes::move_selected_tracks (bool up)
 				leading = tmp;
 
 			} else {
-				if (leading == view_routes.begin()) {
+				if (leading == view_stripables.begin()) {
 					break;
 				}
 				--leading;
@@ -1472,7 +1475,7 @@ EditorRoutes::move_selected_tracks (bool up)
 		};
 	}
 
-	for (leading = view_routes.begin(); leading != view_routes.end(); ++leading) {
+	for (leading = view_stripables.begin(); leading != view_stripables.end(); ++leading) {
 		uint32_t order = (uint32_t) leading->second->presentation_info().group_order ();
 		neworder.push_back (order);
 	}
@@ -1502,10 +1505,10 @@ EditorRoutes::update_input_active_display ()
 	TreeModel::Children::iterator i;
 
 	for (i = rows.begin(); i != rows.end(); ++i) {
-		boost::shared_ptr<Route> route = (*i)[_columns.route];
+		boost::shared_ptr<Stripable> stripable = (*i)[_columns.stripable];
 
-		if (boost::dynamic_pointer_cast<Track> (route)) {
-			boost::shared_ptr<MidiTrack> mt = boost::dynamic_pointer_cast<MidiTrack> (route);
+		if (boost::dynamic_pointer_cast<Track> (stripable)) {
+			boost::shared_ptr<MidiTrack> mt = boost::dynamic_pointer_cast<MidiTrack> (stripable);
 
 			if (mt) {
 				(*i)[_columns.is_input_active] = mt->input_active();
@@ -1530,12 +1533,17 @@ EditorRoutes::idle_update_mute_rec_solo_etc()
 	TreeModel::Children::iterator i;
 
 	for (i = rows.begin(); i != rows.end(); ++i) {
-		boost::shared_ptr<Route> route = (*i)[_columns.route];
-		(*i)[_columns.mute_state] = RouteUI::mute_active_state (_session, route);
-		(*i)[_columns.solo_state] = RouteUI::solo_active_state (route);
-		(*i)[_columns.solo_isolate_state] = RouteUI::solo_isolate_active_state (route) ? 1 : 0;
-		(*i)[_columns.solo_safe_state] = RouteUI::solo_safe_active_state (route) ? 1 : 0;
-		(*i)[_columns.active] = route->active ();
+		boost::shared_ptr<Stripable> stripable = (*i)[_columns.stripable];
+		boost::shared_ptr<Route> route = boost::dynamic_pointer_cast<Route> (stripable);
+		(*i)[_columns.mute_state] = RouteUI::mute_active_state (_session, stripable);
+		(*i)[_columns.solo_state] = RouteUI::solo_active_state (stripable);
+		(*i)[_columns.solo_isolate_state] = RouteUI::solo_isolate_active_state (stripable) ? 1 : 0;
+		(*i)[_columns.solo_safe_state] = RouteUI::solo_safe_active_state (stripable) ? 1 : 0;
+		if (route) {
+			(*i)[_columns.active] = route->active ();
+		} else {
+			(*i)[_columns.active] = true;
+		}
 
 		boost::shared_ptr<Track> trk (boost::dynamic_pointer_cast<Track>(route));
 
@@ -1638,10 +1646,10 @@ EditorRoutes::name_edit (std::string const & path, std::string const & new_text)
 		return;
 	}
 
-	boost::shared_ptr<Route> route = (*iter)[_columns.route];
+	boost::shared_ptr<Stripable> stripable = (*iter)[_columns.stripable];
 
-	if (route && route->name() != new_text) {
-		route->set_name (new_text);
+	if (stripable && stripable->name() != new_text) {
+		stripable->set_name (new_text);
 	}
 }
 
